@@ -6,6 +6,7 @@ const $=s=>document.querySelector(s), money=v=>new Intl.NumberFormat('es-MX',{st
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let data,added=[],mode='local',saving=false,cloudBusy=false,captureId=null,lastCloudRead=0,cloudOwner=null,monthSaving=false,editContext=null;const controlKey='control-tarjetas-controls-v1';const adjustmentKey='control-tarjetas-monthly-v1';const key='control-tarjetas-new-v1';
 const cloud=new CardCloud(supabaseConfig);
+const shortcutRequested=new URL(location.href).searchParams.get('nuevo')==='1';let shortcutOpened=false;
 const isLocal=['localhost','127.0.0.1','[::1]'].includes(location.hostname);
 function cardLabel(c){const labels={'TAR-BBVAORO-BBVA-01':'BBVA Oro','TAR-JOY-BANAMEX-02':'Banamex Joy','TAR-Platino-BANREJIO-03':'Banregio Platino','TAR-Mas-BANREJIO-04':'Banregio Más','TAR-Platino-BANORTE-05':'Banorte Platino','TAR-PlatinoAMEX-AMEX-06':'AMEX Platino','TAR-MercadoLibre-MercadoPago-08':'Mercado Pago'};return labels[c.id]||c.name;}
 function paymentButton(person,card,label,cls=''){return `<button class="payment-trigger ${cls}" data-person="${esc(person)}" data-card="${esc(card)}" aria-label="Ver detalle de ${esc(name(person,data.people))}${card?' en '+esc(name(card,data.cards)):''}">${esc(label)}</button>`;}
@@ -14,7 +15,7 @@ function renderPayment(){
  const r=paymentBreakdown(data,month,added,person,card),historical=month<data.baseline&&!r.isSnapshot;
  $('#payment-context').textContent=name(person,data.people)+' · '+(card?name(card,data.cards):'Todas las tarjetas');
  $('#payment-total').textContent=historical?'Sin determinar':money(r.total);
- $('#payment-note').textContent=r.isSnapshot?'Recurrentes y MSI de noviembre. El mes indica el pago previsto, aunque lo realices entre el 30 y el 8. No registra pagos ni abonos.':historical?'No hay información confirmada para reconstruir este mes anterior al Excel.':r.estimated?`Incluye ${money(r.estimated)} de recurrentes de referencia por confirmar. No acredita un pago recibido.`:'Importes previstos para el mes seleccionado. No acredita un pago recibido.';
+ $('#payment-note').textContent=r.isSnapshot?'Recurrentes, MSI y compras confirmadas de noviembre. El mes indica el pago previsto, aunque lo realices entre el 30 y el 8. No registra pagos ni abonos.':historical?'No hay información confirmada para reconstruir este mes anterior al Excel.':r.estimated?`Incluye ${money(r.estimated)} de recurrentes de referencia por confirmar. No acredita un pago recibido.`:'Importes previstos para el mes seleccionado. No acredita un pago recibido.';
  const actions=(p,excluded=false)=>`<div class="month-line-actions"><button type="button" class="month-action secondary" data-month-action="edit" data-id="${esc(p.id)}">Ajustar</button><button type="button" class="month-action secondary" data-month-action="${excluded?'include':'skip'}" data-id="${esc(p.id)}">${excluded?'Volver a incluir':'No aplica este mes'}</button>${p.adjusted||excluded?`<button type="button" class="month-action subtle" data-month-action="reset" data-id="${esc(p.id)}">Restaurar original</button>`:''}</div>`;
  const lineHtml=(p,excluded=false)=>{const type=p.kind==='msi'?'MSI':p.kind==='recurring'?'Recurrente':'Compra o cuota';const seq=p.sequence&&p.terms>1?` · Mensualidad ${p.sequence} de ${p.terms}`:'';const original=p.adjustment?.amountCents??p.baseValue;return `<article class="payment-line ${excluded?'skipped-line':''}"><div><h3>${esc(p.description)}</h3><p>${esc(name(p.card,data.cards))} · ${type}${seq}</p><small>Compra original: ${money(cents(p.amount))}${p.estimate?' · Vigencia por confirmar':''}</small>${excluded?'<span class="adjustment-tag excluded-tag">No aplica este mes</span>':p.adjusted?'<span class="adjustment-tag">Importe ajustado solo este mes</span>':''}${actions(p,excluded)}${managementActions(p)}</div><strong>${excluded?`<s>${original===null?'Sin importe base':money(original)}</s>`:money(p.value)}</strong></article>`;};
  $('#payment-lines').innerHTML=r.lines.map(p=>lineHtml(p)).join('')||'<div class="empty-payment">'+(historical?'No hay un desglose histórico confirmado.':'No hay cargos incluidos para esta selección.')+'</div>';
@@ -28,7 +29,7 @@ function table(target,headers,rows){$(target).innerHTML='<thead><tr>'+headers.ma
 function render(){
  if(!data)return;
  const month=$('#month').value;if(!month)return;
- const result=report(data,month,added),historical=month<data.baseline&&!result.isSnapshot;const banks=bankPeriod(data,month,result);const bankByCard=new Map(banks.map(b=>[b.card,b]));const recurringTotal=result.lines.filter(p=>p.kind==='recurring').reduce((s,p)=>s+p.value,0);const newNormalTotal=result.lines.filter(p=>p.kind==='normal'&&!p.legacy).reduce((s,p)=>s+p.value,0);
+ const result=report(data,month,added),historical=month<data.baseline&&!result.isSnapshot;const banks=bankPeriod(data,month,result);const bankByCard=new Map(banks.map(b=>[b.card,b]));const recurringTotal=result.lines.filter(p=>p.kind==='recurring').reduce((s,p)=>s+p.value,0);const newNormalTotal=result.lines.filter(p=>p.kind==='normal').reduce((s,p)=>s+p.value,0);
  $('#total').textContent=historical?'No determinado':money(result.total);
  $('#scheduled-total').textContent=historical?'Sin determinar':money(result.total-recurringTotal);
  $('#recurring-total').textContent=historical?'Sin determinar':money(recurringTotal);
@@ -39,10 +40,10 @@ function render(){
  $('#recurring-label').textContent='Recurrentes del mes';
  $('#scheduled-hint').textContent='Cuotas del mes seleccionado';
  $('#recurring-hint').textContent=result.estimated?'Importes de referencia por confirmar':'Importes del mes seleccionado';
- $('#breakdown').textContent=historical?'No hay datos confirmados para reconstruir este mes.':`${money(result.total-recurringTotal)} en MSI${newNormalTotal?' y compras nuevas':''} + ${money(recurringTotal)} en recurrentes`;
+ $('#breakdown').textContent=historical?'No hay datos confirmados para reconstruir este mes.':`${money(result.total-recurringTotal)} en MSI${newNormalTotal?' y compras con mes confirmado':''} + ${money(recurringTotal)} en recurrentes`;
  $('#notice').classList.toggle('warning',historical||result.unknown.length>0||result.isSnapshot);
- $('#notice').textContent=result.isSnapshot?'Plan de pago de noviembre: recurrentes de noviembre y MSI de noviembre. Las compras normales originales se conservan sin incluirlas en este plan. Pagar entre el 30 y el 8 no cambia por sí solo el mes del cargo.':historical?'El Excel corresponde a noviembre de 2026. Para meses anteriores falta el historial comprobado.':`Del Excel original solo se incluyen MSI pendientes y recurrentes. ${result.unknown.length} registros con cuotas sin marca MSI quedan en «Por revisar»; no se borran ni se suman automáticamente.`;
- $('#matrix-caption').textContent=result.isSnapshot?'Recurrentes y MSI de noviembre':'Incluye recurrentes de referencia';
+ $('#notice').textContent=result.isSnapshot?'Plan de pago de noviembre: recurrentes, MSI y compras con mes confirmado. Las demás compras originales se conservan fuera del plan. Pagar entre el 30 y el 8 no cambia por sí solo el mes del cargo.':historical?'El Excel corresponde a noviembre de 2026. Para meses anteriores falta el historial comprobado.':`Del Excel original solo se incluyen MSI pendientes y recurrentes. ${result.unknown.length} registros con cuotas sin marca MSI quedan en «Por revisar»; no se borran ni se suman automáticamente.`;
+ $('#matrix-caption').textContent=result.isSnapshot?'Importes confirmados de noviembre':'Incluye recurrentes de referencia';
  if(result.adjustmentCount)$('#notice').textContent+=` Hay ${result.adjustmentCount} ajustes exclusivos de este mes; no cambian compras originales ni registran pagos.`;
  const active=data.people.filter(p=>[...data.purchases,...added].some(x=>x.person===p.id));
  let html='<thead><tr><th>Persona</th>'+data.cards.map(c=>'<th>'+esc(cardLabel(c))+'</th>').join('')+'<th>Total persona</th></tr></thead><tbody>';
@@ -80,7 +81,7 @@ function fillControls(){
  $('#payment-person').innerHTML=data.people.map(p=>`<option value="${esc(p.id)}">${esc(p.name)}</option>`).join('');
  $('#payment-card').innerHTML='<option value="">Todas las tarjetas</option>'+data.cards.map(c=>`<option value="${esc(c.id)}">${esc(cardLabel(c))}</option>`).join('');
  for(const [field,items]of [['person',data.people],['card',data.cards]])$('#form').elements[field].innerHTML=items.map(p=>`<option value="${esc(p.id)}">${esc(items===data.cards?cardLabel(p):p.name)}</option>`).join('');
- $('#new').disabled=false;$('#export').disabled=false;$('#main-content').hidden=false;render();
+ $('#new').disabled=false;$('#export').disabled=false;$('#main-content').hidden=false;render();maybeOpenQuickCapture();
 }
 function readLocalAdded(book){
  const saved=JSON.parse(localStorage.getItem(key)||'[]');if(!Array.isArray(saved))throw Error('No se pudo leer el registro local. No se ha borrado.');
@@ -259,3 +260,17 @@ $('#payment-share').onclick=async()=>{
 $('#share-close').onclick=()=>$('#share-dialog').close();
 $('#share-download').onclick=()=>{if(!sharedImage)return;const a=document.createElement('a');a.href=sharedUrl;a.download=sharedImage.name;a.click();$('#share-status').textContent='Imagen descargada. Puedes enviarla a la persona.';};
 $('#share-send').onclick=async()=>{if(!sharedImage)return;try{if(navigator.canShare?.({files:[sharedImage]})){await navigator.share({files:[sharedImage],title:'Resumen de tarjetas'});$('#share-status').textContent='Se cerró la ventana de compartir.';}else{$('#share-status').textContent='Descarga la imagen y adjúntala en WhatsApp o en la aplicación que prefieras.';$('#share-download').click();}}catch(error){if(error.name!=='AbortError')$('#share-status').textContent='No se pudo compartir. Usa Descargar imagen.';}};
+
+function maybeOpenQuickCapture(){
+ if(!shortcutRequested||shortcutOpened||!data||$('#account-dialog').open||$('#dialog').open)return;
+ if(mode!=='cloud'&&(!isLocal||cloud.session()))return;
+ shortcutOpened=true;const parts=new Intl.DateTimeFormat('en-CA',{timeZone:'America/Mexico_City',year:'numeric',month:'2-digit'}).formatToParts(new Date());
+ $('#month').value=parts.find(p=>p.type==='year').value+'-'+parts.find(p=>p.type==='month').value;render();$('#new').click();
+ const url=new URL(location.href);url.searchParams.delete('nuevo');history.replaceState(null,'',url.pathname+url.search+url.hash);
+}
+$('#account-dialog').addEventListener('close',maybeOpenQuickCapture);
+maybeOpenQuickCapture();
+
+$('#shortcut-help').onclick=()=>{const url=new URL('/',location.origin);url.searchParams.set('nuevo','1');$('#shortcut-link').value=isLocal?'':url.href;$('#shortcut-copy').disabled=isLocal;$('#shortcut-status').textContent=isLocal?'Abre esta opción desde tu página publicada en Netlify para copiar el enlace que funcionará en el iPhone.':'';$('#shortcut-dialog').showModal();};
+$('#shortcut-close').onclick=()=>$('#shortcut-dialog').close();
+$('#shortcut-copy').onclick=async()=>{try{await navigator.clipboard.writeText($('#shortcut-link').value);$('#shortcut-status').textContent='Enlace copiado. Pégalo en la acción URL de Atajos.';}catch{$('#shortcut-link').select();$('#shortcut-status').textContent='Selecciona y copia el enlace manualmente.';}};

@@ -32,3 +32,9 @@ El selector indica el mes del pago previsto. Una fecha aproximada de corte o el 
 ## Pendientes
 
 Configurar el Atajo del iPhone, recuperación de contraseña y una cola de cambios sin conexión.
+
+## Acceso desde Atajos del iPhone
+
+Añadir `?nuevo=1` a la URL publicada abre Nueva compra tras iniciar sesión. En Atajos, crear una acción URL con ese enlace y Abrir URL. El primer mes sugerido usa el mes actual en México; se puede cambiar antes de guardar. El enlace nunca guarda por sí solo ni contiene contraseñas. Si la sesión expiró pide acceso y después continúa al formulario.
+
+Las compras originales con un mes de pago confirmado se incluyen solo ese mes aunque el plan original excluya otras compras normales sin periodo confirmado. No se modifican sus contadores originales.

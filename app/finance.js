@@ -24,6 +24,8 @@ export function sourceMonth(data){
  return data.snapshotMonth||(data.baseline==='2026-12'&&data.paidThrough==='2026-11'?'2026-11':null);
 }
 export function charge(p,month,baseline,snapshotMonth=null){
+ // A confirmed first-payment month assigns a normal imported purchase once.
+ if(p.legacy&&!p.msi&&!p.recurring&&p.start)return {value:month===p.start?cents(p.installment):0,kind:'normal'};
  // The owner confirmed these imported monthly amounts are November charges.
  // This does not alter installment progress or prove an individual payment.
  if(p.legacy&&month===snapshotMonth)return {value:cents(p.installment),kind:p.msi?'msi':p.recurring?'recurring':'normal',snapshot:true};
@@ -48,7 +50,7 @@ export function report(data,month,added=[]){
  for(const p of [...data.purchases,...added]){
   const control=data.purchaseControls?.[p.id];
   if(control?.deleted|| (p.recurring&&control?.endMonth&&month>=control.endMonth))continue;
-  if(p.legacy&&!p.msi&&!p.recurring&&month===sourceMonth(data)){unknown.push({...p,reviewReason:'Compra no recurrente conservada del Excel; fuera del plan de recurrentes y MSI de noviembre.'});continue;}
+  if(p.legacy&&!p.msi&&!p.recurring&&!p.start&&month===sourceMonth(data)){unknown.push({...p,reviewReason:'Compra no recurrente conservada del Excel; fuera del plan de recurrentes y MSI de noviembre.'});continue;}
   let result=charge(p,month,data.baseline,sourceMonth(data));
   const adjustment=monthAdjustments[p.id],baseValue=result.unknown?null:result.value;
   if(adjustment){

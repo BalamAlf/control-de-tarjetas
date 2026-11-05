@@ -24,3 +24,5 @@ button,input,select,summary{touch-action:manipulation}button{min-height:44px}.ic
 #manage-dialog{max-width:580px;max-height:90dvh;overflow:auto}#manage-note{font-size:14px;line-height:1.7}#manage-error{color:#a13d35}#manage-save{min-height:48px}#manage-month{font-size:16px}#purchases td:last-child{min-width:200px}
 
 #share-dialog{max-width:740px;max-height:92dvh;overflow:auto}#share-preview{display:block;width:100%;height:auto;margin-top:20px;border:1px solid #dbe3d5;border-radius:12px}#share-status{font-size:14px;line-height:1.6}#payment-share{min-height:44px;margin:12px 0}
+
+#shortcut-dialog{max-width:580px;max-height:90dvh;overflow:auto}#shortcut-dialog ol{padding-left:24px;line-height:1.8}#shortcut-link{font-size:16px}#shortcut-status{font-size:14px;line-height:1.6}
