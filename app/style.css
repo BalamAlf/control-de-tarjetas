@@ -26,3 +26,5 @@ button,input,select,summary{touch-action:manipulation}button{min-height:44px}.ic
 #share-dialog{max-width:740px;max-height:92dvh;overflow:auto}#share-preview{display:block;width:100%;height:auto;margin-top:20px;border:1px solid #dbe3d5;border-radius:12px}#share-status{font-size:14px;line-height:1.6}#payment-share{min-height:44px;margin:12px 0}
 
 #shortcut-dialog{max-width:580px;max-height:90dvh;overflow:auto}#shortcut-dialog ol{padding-left:24px;line-height:1.8}#shortcut-link{font-size:16px}#shortcut-status{font-size:14px;line-height:1.6}
+
+.bank-status-button{width:100%;min-height:44px;margin-top:14px;font-size:12px;padding:10px 8px}.bank-tile:has(.tile-caption:not(.bank-pending)) .bank-status-button{color:#315b37}#bank-status-dialog{max-width:560px;max-height:90dvh;overflow:auto}#bank-status-error{color:#a13d35;font-size:14px}#bank-status-context{display:block;margin:18px 0}#bank-status-note{font-size:15px;line-height:1.7}

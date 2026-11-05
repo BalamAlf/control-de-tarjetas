@@ -67,11 +67,11 @@ export function report(data,month,added=[]){
  return {cells,lines,skipped,unknown,adjustmentCount:Object.keys(monthAdjustments).length,isSnapshot:month===sourceMonth(data),total:lines.reduce((s,p)=>s+p.value,0),estimated:lines.filter(p=>p.estimate).reduce((s,p)=>s+p.value,0)};
 }
 export function bankPeriod(data,month,result){
- if(month!=='2026-11'||month!==sourceMonth(data))return [];
+ if(!/^(19|20|21)\d{2}-(0[1-9]|1[0-2])$/.test(month)||month<(sourceMonth(data)||data.baseline))return [];
  return data.cards.map(card=>{
   const lines=result.lines.filter(p=>p.card===card.id);
   // Owner-confirmed November bank status, independent of planned charge edits.
-  return {card:card.id,total:lines.reduce((s,p)=>s+p.value,0),status:card.id==='TAR-PlatinoAMEX-AMEX-06'?'paid':'pending'};
+  return {card:card.id,total:lines.reduce((s,p)=>s+p.value,0),status:typeof data.bankPayments?.[month]?.[card.id]?.paid==='boolean'?(data.bankPayments[month][card.id].paid?'paid':'pending'):month==='2026-11'?(card.id==='TAR-PlatinoAMEX-AMEX-06'?'paid':'pending'):'planned'};
  });
 }
 export function paymentBreakdown(data,month,added,person,card=''){

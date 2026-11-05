@@ -50,3 +50,5 @@ test('Gestión envía identificador, acción y mes exactos sin alterar la compra
  await client.savePurchaseControl('p','end','2026-11');await client.savePurchaseControl('p','delete',null);
  assert.ok(calls[0].url.endsWith('/rpc/ct_manage_purchase'));assert.deepEqual(calls.map(x=>x.body),[{p_purchase_id:'p',p_action:'end',p_month:'2026-11'},{p_purchase_id:'p',p_action:'delete',p_month:null}]);
 });
+
+test('El estado bancario envía false y el mes sin inventar importe o fecha de pago',async()=>{let sent;const client=new CardCloud(config,{storage:storage(),fetcher:async(url,o)=>{sent=JSON.parse(o.body);return response({cardId:'card',month:'2026-11',status:{paid:false}});}});client.storeSession(session);await client.saveBankPayment('card','2026-11',false);assert.deepEqual(sent,{p_card_id:'card',p_month:'2026-11',p_paid:false});});

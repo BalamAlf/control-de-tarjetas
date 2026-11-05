@@ -38,3 +38,9 @@ Configurar el Atajo del iPhone, recuperación de contraseña y una cola de cambi
 Añadir `?nuevo=1` a la URL publicada abre Nueva compra tras iniciar sesión. En Atajos, crear una acción URL con ese enlace y Abrir URL. El primer mes sugerido usa el mes actual en México; se puede cambiar antes de guardar. El enlace nunca guarda por sí solo ni contiene contraseñas. Si la sesión expiró pide acceso y después continúa al formulario.
 
 Las compras originales con un mes de pago confirmado se incluyen solo ese mes aunque el plan original excluya otras compras normales sin periodo confirmado. No se modifican sus contadores originales.
+
+## Marcar una tarjeta pagada al banco
+
+En cada tarjeta del mes seleccionado, pulsar «Marcar pagada al banco» y confirmar. «Dejar pendiente» revierte ese estado solo para esa tarjeta y ese mes. Se guarda en la cuenta después de una respuesta exitosa; no registra importe o fecha de transferencia, ni abonos de personas, ni cambia cuotas. Los cargos permanecen en el desglose.
+
+Ejecutar `supabase/004_bank_payments.sql` en la cuenta existente y actualizar Netlify. El archivo exportado local `Habilitar pagos de tarjetas.sql` contiene la misma migración.

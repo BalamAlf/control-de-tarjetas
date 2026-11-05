@@ -23,3 +23,5 @@ tests/finance.test.mjs
 tests/month-adjustments.test.mjs
 tests/purchase-controls.test.mjs
 supabase/LEEME.md
+
+Habilitar pagos de tarjetas.sql

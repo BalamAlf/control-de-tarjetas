@@ -4,7 +4,7 @@ import {supabaseConfig} from './config.js';
 import {report,validatePurchase,cents,paymentBreakdown,bankPeriod,validateMonthAdjustment,withMonthAdjustment} from './finance.js';
 const $=s=>document.querySelector(s), money=v=>new Intl.NumberFormat('es-MX',{style:'currency',currency:'MXN'}).format(v/100);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-let data,added=[],mode='local',saving=false,cloudBusy=false,captureId=null,lastCloudRead=0,cloudOwner=null,monthSaving=false,editContext=null;const controlKey='control-tarjetas-controls-v1';const adjustmentKey='control-tarjetas-monthly-v1';const key='control-tarjetas-new-v1';
+let data,added=[],mode='local',saving=false,cloudBusy=false,captureId=null,lastCloudRead=0,cloudOwner=null,monthSaving=false,editContext=null;const bankKey='control-tarjetas-bank-v1';const controlKey='control-tarjetas-controls-v1';const adjustmentKey='control-tarjetas-monthly-v1';const key='control-tarjetas-new-v1';
 const cloud=new CardCloud(supabaseConfig);
 const shortcutRequested=new URL(location.href).searchParams.get('nuevo')==='1';let shortcutOpened=false;
 const isLocal=['localhost','127.0.0.1','[::1]'].includes(location.hostname);
@@ -33,7 +33,7 @@ function render(){
  $('#total').textContent=historical?'No determinado':money(result.total);
  $('#scheduled-total').textContent=historical?'Sin determinar':money(result.total-recurringTotal);
  $('#recurring-total').textContent=historical?'Sin determinar':money(recurringTotal);
- $('#card-totals').innerHTML=data.cards.map((card,i)=>{const total=[...result.cells].reduce((s,[k,v])=>s+(k.split('|')[1]===card.id?v:0),0);return `<article class="bank-tile" data-color="${i%4}"><div class="bank-heading"><span class="bank-symbol" aria-hidden="true">${esc(cardLabel(card).slice(0,1))}</span><span>${esc(cardLabel(card))}</span></div><strong>${historical?'Sin determinar':money(total)}</strong><span class="tile-caption ${bankByCard.get(card.id)?.status==='pending'?'bank-pending':''}">${bankByCard.get(card.id)?.status==='pending'?'Pendiente al banco':bankByCard.get(card.id)?.status==='paid'?'Pagada al banco':bankByCard.get(card.id)?.status==='review'?'Pago por confirmar':'Previsto este mes'}</span></article>`;}).join('');
+ $('#card-totals').innerHTML=data.cards.map((card,i)=>{const total=[...result.cells].reduce((s,[k,v])=>s+(k.split('|')[1]===card.id?v:0),0);return `<article class="bank-tile" data-color="${i%4}"><div class="bank-heading"><span class="bank-symbol" aria-hidden="true">${esc(cardLabel(card).slice(0,1))}</span><span>${esc(cardLabel(card))}</span></div><strong>${historical?'Sin determinar':money(total)}</strong><span class="tile-caption ${bankByCard.get(card.id)?.status==='pending'?'bank-pending':''}">${bankByCard.get(card.id)?.status==='pending'?'Pendiente al banco':bankByCard.get(card.id)?.status==='paid'?'Pagada al banco':bankByCard.get(card.id)?.status==='review'?'Pago por confirmar':'Previsto este mes'}</span>${!historical?`<button type="button" class="secondary bank-status-button" data-bank-card="${esc(card.id)}" aria-label="${bankByCard.get(card.id)?.status==='paid'?'Dejar pendiente':'Marcar pagada al banco'} ${esc(cardLabel(card))}">${bankByCard.get(card.id)?.status==='paid'?'Dejar pendiente':'Marcar pagada al banco'}</button>`:''}</article>`;}).join('');
  const monthLabel=new Intl.DateTimeFormat('es-MX',{month:'long',year:'numeric',timeZone:'UTC'}).format(new Date(month+'-01T12:00:00Z'));
  $('#total-label').textContent=(result.isSnapshot?'Cargos del mes · ':'Total previsto · ')+monthLabel; if(result.adjustmentCount)$('#notice').dataset.adjusted='true';else delete $('#notice').dataset.adjusted;
  $('#scheduled-label').textContent='MSI y compras programadas';
@@ -107,7 +107,7 @@ function showCloudProblem(error){
 async function loadLocal(){
  if(!isLocal)throw Error('Inicia sesión para cargar tus compras.');
  const response=await fetch('/data/base.json');if(!response.ok)throw Error('No se pudieron cargar las compras locales.');
- data=await response.json();const localMonths=JSON.parse(localStorage.getItem(adjustmentKey)||'{}');if(!localMonths||typeof localMonths!=='object'||Array.isArray(localMonths))throw Error('No se pudieron leer los ajustes locales; se conserva el registro sin borrar.');data={...data,monthAdjustments:localMonths,purchaseControls:JSON.parse(localStorage.getItem(controlKey)||'{}')};added=readLocalAdded(data);mode='local';document.body.classList.remove('cloud-mode');$('#connection-status').textContent='Vista previa local';$('#storage-note').textContent='Las compras nuevas se guardan en este navegador.';fillControls();
+ data=await response.json();const localMonths=JSON.parse(localStorage.getItem(adjustmentKey)||'{}');if(!localMonths||typeof localMonths!=='object'||Array.isArray(localMonths))throw Error('No se pudieron leer los ajustes locales; se conserva el registro sin borrar.');data={...data,monthAdjustments:localMonths,purchaseControls:JSON.parse(localStorage.getItem(controlKey)||'{}'),bankPayments:JSON.parse(localStorage.getItem(bankKey)||'{}')};added=readLocalAdded(data);mode='local';document.body.classList.remove('cloud-mode');$('#connection-status').textContent='Vista previa local';$('#storage-note').textContent='Las compras nuevas se guardan en este navegador.';fillControls();
 }
 async function loadCloud(){
  if(cloudBusy||saving||monthSaving)return false;cloudBusy=true;
@@ -143,12 +143,16 @@ $('#import-local').onclick=async()=>{
   if(Object.keys(controls).length&&confirm('¿Copiar también las finalizaciones y la papelera de este navegador a tu cuenta?')){
    for(const [id,c] of Object.entries(controls)){if(c.endMonth)await cloud.savePurchaseControl(id,'end',c.endMonth);if(c.deleted)await cloud.savePurchaseControl(id,'delete',null);}
   }
+  const bankLocal=JSON.parse(localStorage.getItem(bankKey)||'{}');
+  if(Object.keys(bankLocal).length&&confirm('¿Copiar también los estados bancarios de este navegador? Reemplazará los de esas tarjetas y meses en tu cuenta.')){
+   for(const [month,cards] of Object.entries(bankLocal))for(const [card,status] of Object.entries(cards))await cloud.saveBankPayment(card,month,status.paid);
+  }
   await loadCloud();accountMessage(adjustmentsCopied?'Compras y ajustes guardados en tu cuenta. Se conserva también la copia local.':'Compras guardadas. No se copiaron los ajustes locales; se conservan en este navegador.');
  }catch(error){showCloudProblem(error);}finally{button.disabled=false;}
 };
 $('#sign-out').onclick=async()=>{
  try{await cloud.signOut();}catch{accountMessage('La sesión de este dispositivo se cerró.');}
- if($('#share-dialog').open)$('#share-dialog').close();clearSharedImage();mode='local';data=undefined;added=[];document.body.classList.remove('cloud-mode');
+ if($('#bank-status-dialog').open)$('#bank-status-dialog').close();if($('#share-dialog').open)$('#share-dialog').close();clearSharedImage();mode='local';data=undefined;added=[];document.body.classList.remove('cloud-mode');
  for(const id of ['matrix','details','purchases','pending','card-totals','mobile-people','payment-lines'])$('#'+id).innerHTML='';
  $('#total').textContent='—';$('#scheduled-total').textContent='—';$('#recurring-total').textContent='—';$('#new').disabled=true;$('#export').disabled=true;$('#main-content').hidden=true;$('#connection-status').textContent='Sin sesión';
  if(isLocal)await loadLocal();updateAccount();accountMessage('Sesión cerrada en este dispositivo.');
@@ -158,11 +162,11 @@ window.addEventListener('storage',async event=>{
  data=undefined;added=[];mode='local';document.body.classList.remove('cloud-mode');$('#main-content').hidden=true;$('#new').disabled=true;$('#export').disabled=true;
  for(const id of ['matrix','details','purchases','pending','card-totals','mobile-people','payment-lines'])$('#'+id).innerHTML='';
  $('#total').textContent='—';$('#scheduled-total').textContent='—';$('#recurring-total').textContent='—';$('#connection-status').textContent='Acceso actualizado';
- if($('#share-dialog').open)$('#share-dialog').close();clearSharedImage();if($('#manage-dialog').open)$('#manage-dialog').close();if($('#month-adjust-dialog').open)$('#month-adjust-dialog').close();if($('#payment-dialog').open)$('#payment-dialog').close();if($('#dialog').open)$('#dialog').close();updateAccount();
+ if($('#bank-status-dialog').open)$('#bank-status-dialog').close();if($('#share-dialog').open)$('#share-dialog').close();clearSharedImage();if($('#manage-dialog').open)$('#manage-dialog').close();if($('#month-adjust-dialog').open)$('#month-adjust-dialog').close();if($('#payment-dialog').open)$('#payment-dialog').close();if($('#dialog').open)$('#dialog').close();updateAccount();
  if(cloud.session()){try{await loadCloud();}catch(error){showCloudProblem(error);}}
  if(!data&&!$('#account-dialog').open)$('#account-dialog').showModal();
 });
-async function refreshIfNeeded(){if(mode!=='cloud'||monthSaving||document.hidden||Date.now()-lastCloudRead<15000||$('#dialog').open||$('#account-dialog').open||$('#payment-dialog').open||$('#month-adjust-dialog').open||$('#manage-dialog').open)return;try{await loadCloud();}catch(error){showCloudProblem(error);}}
+async function refreshIfNeeded(){if(mode!=='cloud'||monthSaving||document.hidden||Date.now()-lastCloudRead<15000||$('#dialog').open||$('#account-dialog').open||$('#payment-dialog').open||$('#month-adjust-dialog').open||$('#manage-dialog').open||$('#bank-status-dialog').open)return;try{await loadCloud();}catch(error){showCloudProblem(error);}}
 window.addEventListener('focus',refreshIfNeeded);setInterval(refreshIfNeeded,60000);
 try{
  $('#new').disabled=true;$('#export').disabled=true;
@@ -274,3 +278,26 @@ maybeOpenQuickCapture();
 $('#shortcut-help').onclick=()=>{const url=new URL('/',location.origin);url.searchParams.set('nuevo','1');$('#shortcut-link').value=isLocal?'':url.href;$('#shortcut-copy').disabled=isLocal;$('#shortcut-status').textContent=isLocal?'Abre esta opción desde tu página publicada en Netlify para copiar el enlace que funcionará en el iPhone.':'';$('#shortcut-dialog').showModal();};
 $('#shortcut-close').onclick=()=>$('#shortcut-dialog').close();
 $('#shortcut-copy').onclick=async()=>{try{await navigator.clipboard.writeText($('#shortcut-link').value);$('#shortcut-status').textContent='Enlace copiado. Pégalo en la acción URL de Atajos.';}catch{$('#shortcut-link').select();$('#shortcut-status').textContent='Selecciona y copia el enlace manualmente.';}};
+
+let bankContext=null;
+document.addEventListener('click',e=>{
+ const button=e.target.closest('[data-bank-card]');if(!button||!data||monthSaving)return;
+ const card=button.dataset.bankCard,month=$('#month').value,status=bankPeriod(data,month,report(data,month,added)).find(c=>c.card===card);if(!status)return;
+ bankContext={card,month,paid:status.status!=='paid'};
+ $('#bank-status-title').textContent=bankContext.paid?'Marcar pagada al banco':'Dejar pendiente al banco';
+ $('#bank-status-context').textContent=name(card,data.cards)+' · '+formatMonth(month);
+ $('#bank-status-note').textContent=bankContext.paid?'Confirma que esta tarjeta ya está pagada al banco para este mes. Los cargos se conservan en el desglose.':'La tarjeta volverá a aparecer pendiente al banco solo en este mes.';
+ $('#bank-status-save').textContent=bankContext.paid?'Confirmar pagada':'Confirmar pendiente';$('#bank-status-error').textContent='';$('#bank-status-dialog').showModal();
+});
+$('#bank-status-close').onclick=()=>$('#bank-status-dialog').close();
+$('#bank-status-dialog').addEventListener('cancel',e=>{if(monthSaving)e.preventDefault();});
+$('#bank-status-form').onsubmit=async e=>{
+ e.preventDefault();if(!bankContext||monthSaving||!data)return;const {card,month,paid}=bankContext;monthSaving=true;
+ $('#bank-status-save').disabled=true;$('#bank-status-close').disabled=true;$('#bank-status-error').textContent='';
+ try{
+ let status={paid,updatedAt:new Date().toISOString()};
+ if(mode==='cloud'){const result=await cloud.saveBankPayment(card,month,paid);if(result.cardId!==card||result.month!==month||result.status?.paid!==paid)throw Error('No coincide la confirmación. Actualiza antes de continuar.');status=result.status;}
+ const bankPayments={...(data.bankPayments||{}),[month]:{...(data.bankPayments?.[month]||{}),[card]:status}};
+ if(mode!=='cloud')localStorage.setItem(bankKey,JSON.stringify(bankPayments));data={...data,bankPayments};render();$('#bank-status-dialog').close();bankContext=null;
+ }catch(error){$('#bank-status-error').textContent=error.message;}finally{monthSaving=false;$('#bank-status-save').disabled=false;$('#bank-status-close').disabled=false;}
+};

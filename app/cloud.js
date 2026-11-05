@@ -80,6 +80,10 @@ export class CardCloud {
     try{return await this.request('/rest/v1/rpc/ct_manage_purchase',{method:'POST',body:{p_purchase_id:id,p_action:action,p_month:month||null}});}
     catch(error){if(error.code==='PGRST202')throw new CloudError('Ejecuta Habilitar ajustes mensuales.sql en SQL Editor para activar estas opciones.',error.status,error.code);throw error;}
   }
+  async saveBankPayment(card,month,paid){
+    try{return await this.request('/rest/v1/rpc/ct_set_bank_payment',{method:'POST',body:{p_card_id:card,p_month:month,p_paid:paid}});}
+    catch(error){if(error.code==='PGRST202')throw new CloudError('Ejecuta Habilitar pagos de tarjetas.sql en SQL Editor para guardar el estado bancario.',error.status,error.code);throw error;}
+  }
   async signOut() {
     const session=this.session();
     // Clear this device even when the remote logout is temporarily unavailable.
