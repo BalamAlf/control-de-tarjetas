@@ -25,3 +25,5 @@ tests/purchase-controls.test.mjs
 supabase/LEEME.md
 
 Habilitar pagos de tarjetas.sql
+
+Habilitar personas y tarjetas.sql

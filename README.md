@@ -44,3 +44,9 @@ Las compras originales con un mes de pago confirmado se incluyen solo ese mes au
 En cada tarjeta del mes seleccionado, pulsar «Marcar pagada al banco» y confirmar. «Dejar pendiente» revierte ese estado solo para esa tarjeta y ese mes. Se guarda en la cuenta después de una respuesta exitosa; no registra importe o fecha de transferencia, ni abonos de personas, ni cambia cuotas. Los cargos permanecen en el desglose.
 
 Ejecutar `supabase/004_bank_payments.sql` en la cuenta existente y actualizar Netlify. El archivo exportado local `Habilitar pagos de tarjetas.sql` contiene la misma migración.
+
+## Personas y tarjetas
+
+Los botones visibles Personas · agregar y editar y Tarjetas y pagos al banco abren la administración de la cuenta. Agregar y Editar permiten cambiar nombres y alias; archivar impide nuevas compras sin borrar el historial. Restaurar se hace desmarcando Archivar. Los estados bancarios se confirman por tarjeta y mes. No se lleva un registro de abonos de personas.
+
+Ejecutar `supabase/005_entities.sql` después de las migraciones anteriores. El archivo local Habilitar personas y tarjetas.sql reúne las capacidades bancarias y de administración para esta entrega. El servidor conserva identificadores, valida propietario y revisión para evitar reemplazar una edición de otro dispositivo, y bloquea nuevas compras sobre personas o tarjetas archivadas.
