@@ -1,5 +1,5 @@
 import test from 'node:test';import assert from 'node:assert/strict';
-import {report,withMonthAdjustment,validatePurchase} from '../app/finance.js';
+import {report,withMonthAdjustment,validatePurchase,bankPeriod} from '../app/finance.js';
 const recurring={id:'example-r',person:'example-person',card:'example-card',description:'Servicio de ejemplo',amount:1000,installment:1000,lastInstallment:1000,terms:1,remaining:1,paid:0,recurring:true,msi:false,legacy:false,start:'2026-11'};
 const msi={...recurring,id:'example-msi',description:'Compra de ejemplo',amount:1000,installment:333.33,lastInstallment:333.34,terms:3,remaining:3,recurring:false,msi:true};
 const book={baseline:'2026-11',people:[{id:'example-person',name:'Persona de ejemplo'}],cards:[{id:'example-card',name:'Tarjeta de ejemplo'}],purchases:[recurring,msi]};
@@ -9,3 +9,5 @@ test('Omitir un mes, finalizar y papelera conservan el original',()=>{let change
 test('Validación rechaza compras incompletas',()=>{assert.throws(()=>validatePurchase({amount:-1,terms:0}));});
 
 test('Una compra original con mes confirmado se suma una vez, sin hacerse recurrente',()=>{const purchase={...recurring,id:'one-time-example',legacy:true,recurring:false,start:'2026-11',remaining:0,paid:1};const data={...book,snapshotMonth:'2026-11',purchases:[purchase]};assert.equal(report(data,'2026-11').total,100000);assert.equal(report(data,'2026-12').total,0);assert.equal(purchase.paid,1);assert.equal(purchase.recurring,false);});
+
+test('En noviembre solo AMEX está pagada; las demás pendientes y editar cargos no registra pagos',()=>{const data={...book,baseline:'2026-12',snapshotMonth:'2026-11',cards:[{id:'TAR-PlatinoAMEX-AMEX-06'},{id:'TAR-Platino-BANORTE-05'},{id:'TAR-BBVAORO-BBVA-01'}]};const states=bankPeriod(data,'2026-11',report(data,'2026-11'));assert.deepEqual(states.map(c=>c.status),['paid','pending','pending']);const adjusted=withMonthAdjustment(data,{id:recurring.id,month:'2026-11'},{amountCents:120000,skipped:false});assert.deepEqual(bankPeriod(adjusted,'2026-11',report(adjusted,'2026-11')).map(c=>c.status),['paid','pending','pending']);assert.deepEqual(bankPeriod(data,'2026-12',report(data,'2026-12')),[]);});

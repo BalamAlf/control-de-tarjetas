@@ -69,8 +69,9 @@ export function report(data,month,added=[]){
 export function bankPeriod(data,month,result){
  if(month!=='2026-11'||month!==sourceMonth(data))return [];
  return data.cards.map(card=>{
-  const lines=result.lines.filter(p=>p.card===card.id),newCharges=lines.some(p=>!p.legacy||p.adjusted)||result.skipped.some(p=>p.card===card.id)||[...data.purchases].some(p=>p.card===card.id&&(data.purchaseControls?.[p.id]?.deleted||(data.purchaseControls?.[p.id]?.endMonth&&month>=data.purchaseControls[p.id].endMonth)));
-  return {card:card.id,total:lines.reduce((s,p)=>s+p.value,0),status:card.id==='TAR-Platino-BANORTE-05'?'pending':newCharges?'review':'paid'};
+  const lines=result.lines.filter(p=>p.card===card.id);
+  // Owner-confirmed November bank status, independent of planned charge edits.
+  return {card:card.id,total:lines.reduce((s,p)=>s+p.value,0),status:card.id==='TAR-PlatinoAMEX-AMEX-06'?'paid':'pending'};
  });
 }
 export function paymentBreakdown(data,month,added,person,card=''){
