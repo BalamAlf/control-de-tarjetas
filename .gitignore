@@ -1,0 +1,25 @@
+node_modules/
+.env*
+!.env.example
+referencias/
+data/base.json
+*.log
+dist/
+.build-staging/
+
+# Local outputs and private backups
+*.zip
+*.xlsx
+*.xls
+*.csv
+*respaldo*.json
+respaldo*/
+backups/
+.agents/
+Habilitar ajustes mensuales.sql
+
+# Regression checks contain private source amounts and stay local
+tests/finance.test.mjs
+tests/month-adjustments.test.mjs
+tests/purchase-controls.test.mjs
+supabase/LEEME.md
