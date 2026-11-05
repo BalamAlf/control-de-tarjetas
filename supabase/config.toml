@@ -1,0 +1,2 @@
+[functions.reader]
+verify_jwt = false

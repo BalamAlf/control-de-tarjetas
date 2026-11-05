@@ -1,0 +1,1221 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Control de Tarjetas — contrato propuesto de lectura",
+    "version": "1.0.0",
+    "description": "Implementado; requiere despliegue y prueba autorizados. URL de ejemplo. Solo GET con credencial delegada."
+  },
+  "servers": [
+    {
+      "url": "https://{projectRef}.supabase.co/functions/v1/reader/v1",
+      "variables": {
+        "projectRef": {
+          "default": "YOUR_TEST_PROJECT_REF"
+        }
+      },
+      "description": "Proyecto de ensayo tras despliegue."
+    }
+  ],
+  "security": [
+    {
+      "IntegrationBearer": []
+    }
+  ],
+  "paths": {
+    "/connection": {
+      "get": {
+        "operationId": "connection_check",
+        "description": "Solo lectura. Permiso verificado en servidor: connection:read. ",
+        "x-required-scope": "connection:read",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Consulta autenticada correcta.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Connection"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/Meta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Respuesta propuesta; no corresponde a un endpoint operativo.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Respuesta propuesta; no corresponde a un endpoint operativo.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Respuesta propuesta; no corresponde a un endpoint operativo.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Respuesta propuesta; no corresponde a un endpoint operativo.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Respuesta propuesta; no corresponde a un endpoint operativo.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Respuesta propuesta; no corresponde a un endpoint operativo.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Solo GET"
+          },
+          "503": {
+            "description": "No disponible o datos incompatibles"
+          }
+        }
+      }
+    },
+    "/people": {
+      "get": {
+        "operationId": "list_people",
+        "description": "Solo lectura. Permiso verificado en servidor: people:read. ",
+        "x-required-scope": "people:read",
+        "parameters": [
+          {
+            "name": "includeArchived",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 50
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 1000
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Consulta autenticada correcta.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Person"
+                      }
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/Meta"
+                    },
+                    "nextCursor": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta",
+                    "nextCursor"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Respuesta propuesta; no corresponde a un endpoint operativo.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Respuesta propuesta; no corresponde a un endpoint operativo.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Respuesta propuesta; no corresponde a un endpoint operativo.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Respuesta propuesta; no corresponde a un endpoint operativo.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Respuesta propuesta; no corresponde a un endpoint operativo.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Respuesta propuesta; no corresponde a un endpoint operativo.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Solo GET"
+          },
+          "503": {
+            "description": "No disponible o datos incompatibles"
+          }
+        }
+      }
+    },
+    "/cards": {
+      "get": {
+        "operationId": "list_cards",
+        "description": "Solo lectura. Permiso verificado en servidor: cards:read. ",
+        "x-required-scope": "cards:read",
+        "parameters": [
+          {
+            "name": "includeArchived",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 50
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 1000
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Consulta autenticada correcta.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Card"
+                      }
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/Meta"
+                    },
+                    "nextCursor": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta",
+                    "nextCursor"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Respuesta propuesta; no corresponde a un endpoint operativo.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Respuesta propuesta; no corresponde a un endpoint operativo.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Respuesta propuesta; no corresponde a un endpoint operativo.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Respuesta propuesta; no corresponde a un endpoint operativo.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Respuesta propuesta; no corresponde a un endpoint operativo.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Respuesta propuesta; no corresponde a un endpoint operativo.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Solo GET"
+          },
+          "503": {
+            "description": "No disponible o datos incompatibles"
+          }
+        }
+      }
+    },
+    "/purchases": {
+      "get": {
+        "operationId": "list_purchases",
+        "description": "Solo lectura. Permiso verificado en servidor: purchases:read. month filtra compras con cargo o revisión de periodo pertinente; amountCents es el importe original, no una cuota mensual.  Incluye registros por revisar o excluidos pertinentes al mes, no papelera o recurrentes finalizados.",
+        "x-required-scope": "purchases:read",
+        "parameters": [
+          {
+            "name": "month",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^(19|20|21)[0-9]{2}-(0[1-9]|1[0-2])$"
+            }
+          },
+          {
+            "name": "personId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 100
+            }
+          },
+          {
+            "name": "cardId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 100
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 50
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 1000
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Consulta autenticada correcta.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Purchase"
+                      }
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/Meta"
+                    },
+                    "nextCursor": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta",
+                    "nextCursor"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Respuesta propuesta; no corresponde a un endpoint operativo.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Respuesta propuesta; no corresponde a un endpoint operativo.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Respuesta propuesta; no corresponde a un endpoint operativo.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Respuesta propuesta; no corresponde a un endpoint operativo.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Respuesta propuesta; no corresponde a un endpoint operativo.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Respuesta propuesta; no corresponde a un endpoint operativo.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Solo GET"
+          },
+          "503": {
+            "description": "No disponible o datos incompatibles"
+          }
+        }
+      }
+    },
+    "/installments": {
+      "get": {
+        "operationId": "list_installments",
+        "description": "Solo lectura. Permiso verificado en servidor: installments:read. Cuotas MSI previstas para el mes, no prueba de impago. ",
+        "x-required-scope": "installments:read",
+        "parameters": [
+          {
+            "name": "month",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^(19|20|21)[0-9]{2}-(0[1-9]|1[0-2])$"
+            }
+          },
+          {
+            "name": "personId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 100
+            }
+          },
+          {
+            "name": "cardId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 100
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 50
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 1000
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Consulta autenticada correcta.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Installment"
+                      }
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/Meta"
+                    },
+                    "nextCursor": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta",
+                    "nextCursor"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Respuesta propuesta; no corresponde a un endpoint operativo.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Respuesta propuesta; no corresponde a un endpoint operativo.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Respuesta propuesta; no corresponde a un endpoint operativo.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Respuesta propuesta; no corresponde a un endpoint operativo.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Respuesta propuesta; no corresponde a un endpoint operativo.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Respuesta propuesta; no corresponde a un endpoint operativo.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Solo GET"
+          },
+          "503": {
+            "description": "No disponible o datos incompatibles"
+          }
+        }
+      }
+    },
+    "/monthly-summary": {
+      "get": {
+        "operationId": "monthly_summary",
+        "description": "Solo lectura. Permiso verificado en servidor: summary:read. Totales de cargos previstos; nunca representa deuda bancaria conciliada o saldo por cobrar. Los estados son declaraciones o valores de referencia identificados por source. ",
+        "x-required-scope": "summary:read",
+        "parameters": [
+          {
+            "name": "month",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^(19|20|21)[0-9]{2}-(0[1-9]|1[0-2])$"
+            }
+          },
+          {
+            "name": "personId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 100
+            }
+          },
+          {
+            "name": "cardId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 100
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Consulta autenticada correcta.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Summary"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/Meta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Respuesta propuesta; no corresponde a un endpoint operativo.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Respuesta propuesta; no corresponde a un endpoint operativo.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Respuesta propuesta; no corresponde a un endpoint operativo.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Respuesta propuesta; no corresponde a un endpoint operativo.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Respuesta propuesta; no corresponde a un endpoint operativo.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Respuesta propuesta; no corresponde a un endpoint operativo.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Solo GET"
+          },
+          "503": {
+            "description": "No disponible o datos incompatibles"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "IntegrationBearer": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "Opaque integration credential",
+        "description": "Credencial delegada exclusiva. No es una clave publicable ni una sesión del navegador. Alcances obligatorios en servidor; tokens rechazados fuera de la API delegada."
+      }
+    },
+    "schemas": {
+      "Meta": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "requestId": {
+            "type": "string"
+          },
+          "snapshotId": {
+            "type": "string"
+          },
+          "calculatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "calculationVersion": {
+            "type": "string"
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "requestId",
+          "snapshotId",
+          "calculatedAt",
+          "calculationVersion",
+          "warnings"
+        ]
+      },
+      "Person": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "name": {
+            "type": "string"
+          },
+          "archived": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "archived"
+        ]
+      },
+      "Card": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "name": {
+            "type": "string"
+          },
+          "bank": {
+            "type": "string"
+          },
+          "archived": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "archived"
+        ]
+      },
+      "Purchase": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "personId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "cardId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "description": {
+            "type": "string"
+          },
+          "amountCents": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 10000000000
+          },
+          "currency": {
+            "const": "MXN"
+          },
+          "kind": {
+            "enum": [
+              "normal",
+              "msi",
+              "recurring"
+            ]
+          },
+          "terms": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 120
+          },
+          "startMonth": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(19|20|21)[0-9]{2}-(0[1-9]|1[0-2])$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "personId",
+          "cardId",
+          "description",
+          "amountCents",
+          "currency",
+          "kind",
+          "terms",
+          "startMonth"
+        ]
+      },
+      "Installment": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "purchaseId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "personId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "cardId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "month": {
+            "type": "string",
+            "pattern": "^(19|20|21)[0-9]{2}-(0[1-9]|1[0-2])$"
+          },
+          "amountCents": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 10000000000
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "currency": {
+            "const": "MXN"
+          },
+          "status": {
+            "enum": [
+              "scheduled",
+              "excluded",
+              "needs_review"
+            ]
+          },
+          "sequence": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 1
+          },
+          "terms": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        "required": [
+          "purchaseId",
+          "personId",
+          "cardId",
+          "month",
+          "amountCents",
+          "currency",
+          "status",
+          "sequence",
+          "terms"
+        ]
+      },
+      "CardStatus": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "cardId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "status": {
+            "enum": [
+              "paid",
+              "pending",
+              "planned",
+              "unknown"
+            ]
+          },
+          "source": {
+            "enum": [
+              "user_recorded",
+              "baseline",
+              "unconfirmed"
+            ]
+          }
+        },
+        "required": [
+          "cardId",
+          "status",
+          "source"
+        ]
+      },
+      "Summary": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "month": {
+            "type": "string",
+            "pattern": "^(19|20|21)[0-9]{2}-(0[1-9]|1[0-2])$"
+          },
+          "currency": {
+            "const": "MXN"
+          },
+          "basis": {
+            "const": "planned_charges"
+          },
+          "totalCents": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 10000000000
+          },
+          "msiCents": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 10000000000
+          },
+          "recurringCents": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 10000000000
+          },
+          "normalCents": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 10000000000
+          },
+          "excludedCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "unresolvedCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "bankStatuses": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CardStatus"
+            }
+          }
+        },
+        "required": [
+          "month",
+          "currency",
+          "basis",
+          "totalCents",
+          "msiCents",
+          "recurringCents",
+          "normalCents",
+          "excludedCount",
+          "unresolvedCount",
+          "bankStatuses"
+        ]
+      },
+      "Connection": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "status": {
+            "const": "authorized"
+          },
+          "mode": {
+            "const": "read_only"
+          },
+          "grantedScopes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "status",
+          "mode",
+          "grantedScopes"
+        ]
+      },
+      "Error": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "requestId": {
+            "type": "string"
+          },
+          "error": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "code": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "code",
+              "message"
+            ]
+          }
+        },
+        "required": [
+          "requestId",
+          "error"
+        ]
+      }
+    }
+  }
+}
