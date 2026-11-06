@@ -2,9 +2,13 @@
 
 ## Estado de esta entrega
 
-Implementación preparada en el repositorio, con pruebas Node, SQL y navegador usando datos ficticios. **La migración 009 no está instalada en ensayo ni producción**: las dos confirmaciones de apply_migration caducaron. La consulta de catálogo confirmó su ausencia. La comparación de configuración, compras y credenciales de producción antes/después resultó idéntica; no se restauró ninguna compra ni estado bancario real.
+**Instalación verificada en producción.** El propietario ejecutó 009 y publicó el frontend. La comprobación de catálogo confirmó las cinco funciones y la tabla interna; Netlify sirve la entrega de restauración publicada por el propietario. La exportación autenticada devuelve formato 2, propietario correcto y todas sus compras, sin credenciales.
 
-Para activar la función, instalar `supabase/009_backups.sql` y publicar el frontend actualizado en Netlify. La migración crea funciones y una tabla interna; no ejecuta una restauración ni sustituye datos. No requiere volver a conectar Muse, cambiar sus tokens ni crear otro proyecto. Ensayar la instalación en el proyecto ficticio antes de producción.
+La primera validación de los datos reales mostró que los originales incluían avances pagados null y marcas MSI/recurrente simultáneas. La validación inicial era demasiado estricta. Se aplicaron 010 y 011, que conservan esos valores originales sin convertir null a cero ni reclasificar compras; las compras nuevas siguen requiriendo datos consistentes. El respaldo actual ya pasa la validación del servidor y revisar ese mismo respaldo produce cero cambios en ambos modos. No se ejecutó una restauración ni se modificaron compras o pagos reales para comprobarlo.
+
+El proyecto de ensayo no tiene instalada 009; las pruebas de restauración con datos ficticios fueron SQL/navegador aislados. Las confirmaciones iniciales del conector habían caducado; después el propietario instaló producción. No se presenta esa situación como un ensayo remoto completado.
+
+Para instalaciones nuevas, ejecutar 001–011 en orden y publicar el frontend actualizado. El archivo local Activar respaldos.sql reúne 009–011 para quienes ya tienen 001–008. No hace falta volver a conectar Muse, cambiar tokens ni crear otro proyecto. La mejora de texto «Meses pagados sin dato» en la vista previa queda en el ZIP actualizado; requiere publicarlo en Netlify.
 
 ## Uso
 
@@ -42,8 +46,8 @@ La revisión enlaza contenido, modo y un identificador UUID. El servidor guarda 
 
 ## Pruebas realizadas
 
-69 pruebas Node aprobadas: 42 publicables y 27 regresiones privadas locales. SQL aislado: formato antiguo, separación de propietarios/roles, campos inválidos y duplicados, valores predeterminados preservados en recuperación, recuperación de faltantes, valores anteriores explícitos, preservación de compras posteriores, metadatos/revisiones, caducidad, reintento, copia anterior, cuenta vacía y rollback ante un fallo de escritura inducido. El test publicable `tests/backups-security.sql` contiene datos ficticios y termina en ROLLBACK; usarlo solo en ensayo después de las migraciones.
+70 pruebas Node aprobadas: 43 publicables y 27 regresiones privadas locales. SQL aislado: formato antiguo, separación de propietarios/roles, campos inválidos y duplicados, valores predeterminados preservados en recuperación, recuperación de faltantes, valores anteriores explícitos, preservación de compras posteriores, metadatos/revisiones, caducidad, reintento, copia anterior, cuenta vacía y rollback ante un fallo de escritura inducido. El test publicable `tests/backups-security.sql` contiene datos ficticios y termina en ROLLBACK; usarlo solo en ensayo después de las migraciones.
 
 Navegador conectado a Postgres aislado: descarga, carga del archivo, vista previa sin escrituras financieras, confirmación, copia anterior, reconocimiento de formato viejo, conflicto y nueva revisión, recuperación de cuenta vacía y vista móvil. La regresión del diseño verde también verifica captura MSI/Atajo, compartir imagen, ajustes, pagos, menús, personas y Polilla con respuestas simuladas.
 
-La instalación/prueba remota sigue pendiente por las confirmaciones caducadas. No se presenta el ensayo local como una verificación de despliegue en Supabase. Los asesores actuales de producción mantienen los avisos anteriores documentados en la auditoría; la migración nueva aún no puede ser evaluada allí. Tras instalarla, revisar RLS/grants y el [asesor de funciones autenticadas](https://supabase.com/docs/guides/database/database-linter?lint=0029_authenticated_security_definer_function_executable).
+La verificación remota confirmó exportación, validación y planes sin cambios sobre la cuenta actual. Las comprobaciones efectivas de permisos dieron RLS activa, snapshots privados y restauración denegada a anon y service_role. Los asesores conservan los avisos anteriores y señalan los nuevos RPC autenticados e internos según su diseño. Referencia: [asesor de funciones autenticadas](https://supabase.com/docs/guides/database/database-linter?lint=0029_authenticated_security_definer_function_executable).

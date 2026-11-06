@@ -44,7 +44,7 @@ La copia pública no incluye Excel, compras privadas, tokens ni respaldos. La vi
 
 **Organizar → Respaldos** reúne descarga y restauración con vista previa. Recupera faltantes sin cambiar los valores actuales; permite recuperar valores anteriores con confirmación explícita. Conserva compras posteriores y guarda una copia anterior. Compatible con respaldos antiguos. [Guía y límites](docs/BACKUPS.md).
 
-**Activación pendiente:** la migración 009 no se instaló porque caducaron las confirmaciones de Supabase. Instalarla y actualizar Netlify antes de usar esta función. No se restauraron registros reales durante el desarrollo.
+**Instalación verificada en producción.** 010 y 011 conservan avances originales sin dato y marcas históricas simultáneas, sin cambiar los registros. La exportación y la validación del respaldo actual funcionan. No se restauraron registros reales para probarlo. El estado del entorno de ensayo y los límites se detallan en la guía.
 
 ## Supabase
 
@@ -59,6 +59,8 @@ Para una instalación nueva, aplicar las migraciones en orden:
 7. `007_proposals.sql`: propuestas con confirmación del propietario.
 8. `008_connections.sql`: accesos revocables sin caducidad automática.
 9. `009_backups.sql`: respaldos, revisión y recuperación autenticada.
+10. `010_backup_legacy_paid.sql`: conserva avances históricos pagados sin dato.
+11. `011_backup_legacy_flags.sql`: conserva las marcas originales de tipo de compra.
 
 En una cuenta existente aplicar solo lo que falte. No reimportar ni sustituir compras para actualizar funciones. Desplegar también las funciones `reader` y `proposals` siguiendo sus guías; el build de Netlify no las despliega. Las tablas financieras tienen políticas por propietario; las tablas internas de conectores/propuestas no conceden acceso directo al navegador.
 
@@ -72,4 +74,4 @@ Marcar «Pagada al banco» conserva los cargos en el desglose y no inventa impor
 
 [Auditoría del 6 de noviembre de 2026](docs/AUDIT-2026-11-06.md): alcance, pruebas, límites y prioridades. La revisión detectó dos defectos reproducibles: renovación de sesión frente a cierre en otra pestaña y conservación de archivos antiguos dentro del directorio publicado. Ambos están corregidos en el fuente; requieren publicar el frontend actualizado. Ver [mejoras preparadas y tres propuestas de diseño](docs/MEJORAS.md). La auditoría original se conserva como registro de lo observado.
 
-Prioridad: publicar el diseño B en verde con las correcciones, activar la restauración preparada y automatizar pruebas/publicación. Después, proponer ajustes de recurrentes por voz con revisión. Las cuentas individuales para consultar una deuda y las finanzas personales quedan para una etapa posterior.
+Prioridad: publicar el diseño B en verde con las correcciones, mantener la restauración verificada y automatizar pruebas/publicación. Después, proponer ajustes de recurrentes por voz con revisión. Las cuentas individuales para consultar una deuda y las finanzas personales quedan para una etapa posterior.

@@ -25,7 +25,7 @@ Probadas a 375, 390, 768, 1024 y 1440 píxeles: sin desbordamiento horizontal ni
 ## Siguientes entregas
 
 1. Publicar el diseño B verde ya integrado y revisar su uso cotidiano en la cuenta real. La comprobación de detalle, captura, pagos, recurrentes, propuestas, compartir y accesos con datos ficticios está completa.
-2. Activar la restauración ya preparada y probada localmente: instalar 009 y publicar el frontend. La prueba remota sigue pendiente porque las confirmaciones caducaron. Ver [respaldos y límites](BACKUPS.md). No reconstruir desde el Excel ni mezclar propietarios automáticamente.
+2. Restauración activada en producción y verificada sin aplicar datos: 009 más compatibilidad histórica 010–011. El ensayo remoto separado sigue pendiente; ver [respaldos y límites](BACKUPS.md). No reconstruir desde el Excel ni mezclar propietarios automáticamente.
 3. Llevar pruebas SQL y navegador a una ejecución reproducible; añadir comprobaciones de GitHub. Publicación automática de Netlify solo después de revisar la configuración/costos del plan.
 4. Extender propuestas a ajustes mensuales de recurrentes, con revisión e idempotencia. Mantener el resto de meses y estados bancarios intactos.
 5. Corrección conversacional de propuestas y aviso de duplicados por contenido, conservando repeticiones legítimas.
