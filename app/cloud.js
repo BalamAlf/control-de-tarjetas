@@ -103,6 +103,15 @@ export class CardCloud {
   connections(){return this.request('/rest/v1/rpc/ct_list_connections',{method:'POST',body:{}});}
   createConnection(profile){return this.request('/rest/v1/rpc/ct_create_connection',{method:'POST',body:{p_profile:profile}});}
   disconnect(id){return this.request('/rest/v1/rpc/ct_disconnect',{method:'POST',body:{p_id:id}});}
+  async backupRpc(name,body={}){
+    try{return await this.request('/rest/v1/rpc/'+name,{method:'POST',body});}
+    catch(error){if(error.code==='PGRST202')throw new CloudError('La función de respaldos todavía no está activada en esta cuenta.',error.status,error.code);throw error;}
+  }
+  exportBackup(){return this.backupRpc('ct_backup_export');}
+  prepareRestore(id,backup,mode){return this.backupRpc('ct_prepare_restore',{p_id:id,p_backup:backup,p_mode:mode});}
+  applyRestore(id,hash){return this.backupRpc('ct_apply_restore',{p_id:id,p_hash:hash,p_confirm:true});}
+  backupBefore(id){return this.backupRpc('ct_restore_before',{p_id:id});}
+  backupHistory(){return this.backupRpc('ct_restore_history');}
   async signOut() {
     const session=this.session();
     // Close locally immediately; a late response must not erase a newer login.

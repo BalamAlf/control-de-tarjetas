@@ -83,3 +83,9 @@ test('Si la cuenta cambia mientras se obtiene el token, no se envía la escritur
  let sent=0;const client=new CardCloud(config,{storage:storage(),fetcher:async()=>{sent++;return response({});}});client.storeSession(session);client.token=async()=>{client.storeSession({...session,user:{id:'new-owner'}});return 'new-token';};
  await assert.rejects(client.savePurchase({id:'old-purchase'}),/cuenta cambió/);assert.equal(sent,0);
 });
+
+test('Restauración mantiene intención, hash y confirmación explícita en RPC autenticados',async()=>{
+ const calls=[],client=new CardCloud(config,{storage:storage(),fetcher:async(url,o)=>{calls.push({url,body:JSON.parse(o.body)});return response({});}});client.storeSession(session);
+ await client.exportBackup();await client.prepareRestore('same-id',{version:2},'recover');await client.applyRestore('same-id','plan-hash');await client.backupBefore('same-id');await client.backupHistory();
+ assert.deepEqual(calls.map(c=>c.url.split('/').at(-1)),['ct_backup_export','ct_prepare_restore','ct_apply_restore','ct_restore_before','ct_restore_history']);assert.deepEqual(calls[1].body,{p_id:'same-id',p_backup:{version:2},p_mode:'recover'});assert.deepEqual(calls[2].body,{p_id:'same-id',p_hash:'plan-hash',p_confirm:true});assert.deepEqual(calls[3].body,{p_id:'same-id'});
+});

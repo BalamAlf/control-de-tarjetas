@@ -40,6 +40,12 @@ Requiere Node.js moderno (Netlify está configurado con Node 22). `npm run dev` 
 
 La copia pública no incluye Excel, compras privadas, tokens ni respaldos. La vista local del propietario usa `data/base.json`, excluido de Git. Una instalación nueva necesita configurar su propio proyecto y su propia primera importación.
 
+## Respaldos y recuperación
+
+**Organizar → Respaldos** reúne descarga y restauración con vista previa. Recupera faltantes sin cambiar los valores actuales; permite recuperar valores anteriores con confirmación explícita. Conserva compras posteriores y guarda una copia anterior. Compatible con respaldos antiguos. [Guía y límites](docs/BACKUPS.md).
+
+**Activación pendiente:** la migración 009 no se instaló porque caducaron las confirmaciones de Supabase. Instalarla y actualizar Netlify antes de usar esta función. No se restauraron registros reales durante el desarrollo.
+
 ## Supabase
 
 Para una instalación nueva, aplicar las migraciones en orden:
@@ -52,6 +58,7 @@ Para una instalación nueva, aplicar las migraciones en orden:
 6. `006_reader.sql`: API de lectura para asistentes.
 7. `007_proposals.sql`: propuestas con confirmación del propietario.
 8. `008_connections.sql`: accesos revocables sin caducidad automática.
+9. `009_backups.sql`: respaldos, revisión y recuperación autenticada.
 
 En una cuenta existente aplicar solo lo que falte. No reimportar ni sustituir compras para actualizar funciones. Desplegar también las funciones `reader` y `proposals` siguiendo sus guías; el build de Netlify no las despliega. Las tablas financieras tienen políticas por propietario; las tablas internas de conectores/propuestas no conceden acceso directo al navegador.
 
@@ -65,4 +72,4 @@ Marcar «Pagada al banco» conserva los cargos en el desglose y no inventa impor
 
 [Auditoría del 6 de noviembre de 2026](docs/AUDIT-2026-11-06.md): alcance, pruebas, límites y prioridades. La revisión detectó dos defectos reproducibles: renovación de sesión frente a cierre en otra pestaña y conservación de archivos antiguos dentro del directorio publicado. Ambos están corregidos en el fuente; requieren publicar el frontend actualizado. Ver [mejoras preparadas y tres propuestas de diseño](docs/MEJORAS.md). La auditoría original se conserva como registro de lo observado.
 
-Prioridad: publicar el diseño B en verde con las correcciones, mejorar recuperación/restauración y automatizar pruebas/publicación. Después, proponer ajustes de recurrentes por voz con revisión. Las cuentas individuales para consultar una deuda y las finanzas personales quedan para una etapa posterior.
+Prioridad: publicar el diseño B en verde con las correcciones, activar la restauración preparada y automatizar pruebas/publicación. Después, proponer ajustes de recurrentes por voz con revisión. Las cuentas individuales para consultar una deuda y las finanzas personales quedan para una etapa posterior.

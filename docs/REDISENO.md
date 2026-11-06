@@ -18,7 +18,7 @@ El estado pagado/pendiente continúa por tarjeta y mes en Tarjetas. El pago al b
 
 Cambian HTML, estilos y presentación/selección del frontend. No cambia el motor financiero, contratos de API, migraciones, credenciales, datos ni funciones de Muse. Las correcciones anteriores de sesión y build siguen incluidas. La política de imágenes permite también blob: para mostrar el PNG generado localmente al compartir; no se habilitan scripts ni imágenes remotas adicionales. El paquete de Netlify incluye solo archivos públicos; no contiene estas maquetas ni datos privados.
 
-La restauración guiada y los ajustes por voz siguen siendo siguientes entregas; no aparecen como capacidades ya implementadas.
+La restauración guiada está preparada en una entrega posterior, pendiente de activar 009; ver [respaldos](BACKUPS.md). Los ajustes por voz siguen siendo una siguiente entrega.
 
 ## Validación
 

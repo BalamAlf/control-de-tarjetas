@@ -2,7 +2,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import {fileURLToPath,pathToFileURL} from 'node:url';
 const defaultRoot=path.dirname(path.dirname(fileURLToPath(import.meta.url)));
-export const PUBLIC_APP_FILES=['cloud.js','config.js','finance.js','main.js','share.js','style.css'];
+export const PUBLIC_APP_FILES=['backup.js','backup-ui.js','cloud.js','config.js','finance.js','main.js','share.js','style.css'];
 export async function build(projectRoot=defaultRoot){
  const root=await fs.realpath(projectRoot),dist=path.join(root,'dist');
  // Copy an explicit manifest into a new, empty directory. Never merge old output.

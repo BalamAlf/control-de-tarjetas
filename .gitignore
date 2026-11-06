@@ -32,3 +32,5 @@ Habilitar personas y tarjetas.sql
 .proposals-release/
 
 .build-*/
+
+Activar respaldos.sql

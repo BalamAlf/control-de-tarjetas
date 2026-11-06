@@ -1,10 +1,11 @@
+import {setupBackupUI} from './backup-ui.js';
 import {paymentImage} from './share.js';
 import {CardCloud} from './cloud.js';
 import {supabaseConfig} from './config.js';
 import {report,validatePurchase,cents,paymentBreakdown,bankPeriod,validateMonthAdjustment,withMonthAdjustment} from './finance.js';
 const $=s=>document.querySelector(s), money=v=>new Intl.NumberFormat('es-MX',{style:'currency',currency:'MXN'}).format(v/100);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-let data,added=[],mode='local',saving=false,cloudBusy=false,captureId=null,lastCloudRead=0,cloudOwner=null,monthSaving=false,editContext=null,selectedPerson='',activeView='month-view';const entityKey='control-tarjetas-entities-v1';const bankKey='control-tarjetas-bank-v1';const controlKey='control-tarjetas-controls-v1';const adjustmentKey='control-tarjetas-monthly-v1';const key='control-tarjetas-new-v1';
+let data,added=[],mode='local',saving=false,cloudBusy=false,captureId=null,lastCloudRead=0,cloudOwner=null,monthSaving=false,editContext=null,selectedPerson='',activeView='month-view',backupUI=null;const entityKey='control-tarjetas-entities-v1';const bankKey='control-tarjetas-bank-v1';const controlKey='control-tarjetas-controls-v1';const adjustmentKey='control-tarjetas-monthly-v1';const key='control-tarjetas-new-v1';
 const cloud=new CardCloud(supabaseConfig);
 const shortcutRequested=new URL(location.href).searchParams.get('nuevo')==='1';let shortcutOpened=false;
 const isLocal=['localhost','127.0.0.1','[::1]'].includes(location.hostname);
@@ -86,7 +87,7 @@ $('#form').onsubmit=async e=>{
   if(mode==='cloud'){const saved=await cloud.savePurchase(p);added=[...added.filter(x=>x.id!==saved.id),saved];markCloudReady();}else{const next=[...added,p];localStorage.setItem(key,JSON.stringify(next));added=next;}$('#month').value=p.start;$('#dialog').close();e.target.reset();f.terms.disabled=true;$('#terms-label').hidden=true;render();
  }catch(error){$('#error').textContent=error.message;}finally{saving=false;submit.disabled=false;submit.textContent='Guardar compra';}
 };
-$('#export').onclick=()=>{const blob=new Blob([JSON.stringify({version:1,exportedAt:new Date().toISOString(),base:data,added},null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='respaldo-tarjetas-'+new Date().toISOString().slice(0,10)+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);};
+
 function fillControls(){
  const oldPerson=$('#payment-person').value,oldCard=$('#payment-card').value;
  $('#source-count').textContent=data.purchases.length+' compras originales conservadas; las de papelera no se suman.';
@@ -166,7 +167,7 @@ $('#import-local').onclick=async()=>{
 };
 $('#sign-out').onclick=async()=>{
  try{await cloud.signOut();}catch{accountMessage('La sesión de este dispositivo se cerró.');}
- clearInlinePeople();clearConnections();clearProposals();if($('#entity-dialog').open)$('#entity-dialog').close();if($('#directory-dialog').open)$('#directory-dialog').close();$('#directory-list').innerHTML='';if($('#bank-status-dialog').open)$('#bank-status-dialog').close();if($('#share-dialog').open)$('#share-dialog').close();clearSharedImage();mode='local';data=undefined;added=[];document.body.classList.remove('cloud-mode');
+ backupUI?.clear();clearInlinePeople();clearConnections();clearProposals();if($('#entity-dialog').open)$('#entity-dialog').close();if($('#directory-dialog').open)$('#directory-dialog').close();$('#directory-list').innerHTML='';if($('#bank-status-dialog').open)$('#bank-status-dialog').close();if($('#share-dialog').open)$('#share-dialog').close();clearSharedImage();mode='local';data=undefined;added=[];document.body.classList.remove('cloud-mode');
  for(const id of ['matrix','details','purchases','pending','card-totals','mobile-people','payment-lines'])$('#'+id).innerHTML='';
  $('#total').textContent='—';$('#scheduled-total').textContent='—';$('#recurring-total').textContent='—';$('#new').disabled=true;$('#export').disabled=true;$('#main-content').hidden=true;$('#connection-status').textContent='Sin sesión';
  if(isLocal)await loadLocal();updateAccount();accountMessage('Sesión cerrada en este dispositivo.');
@@ -176,11 +177,11 @@ window.addEventListener('storage',async event=>{
  data=undefined;added=[];mode='local';document.body.classList.remove('cloud-mode');$('#main-content').hidden=true;$('#new').disabled=true;$('#export').disabled=true;
  for(const id of ['matrix','details','purchases','pending','card-totals','mobile-people','payment-lines'])$('#'+id).innerHTML='';
  $('#total').textContent='—';$('#scheduled-total').textContent='—';$('#recurring-total').textContent='—';$('#connection-status').textContent='Acceso actualizado';
- clearInlinePeople();clearConnections();clearProposals();if($('#entity-dialog').open)$('#entity-dialog').close();if($('#directory-dialog').open)$('#directory-dialog').close();$('#directory-list').innerHTML='';if($('#bank-status-dialog').open)$('#bank-status-dialog').close();if($('#share-dialog').open)$('#share-dialog').close();clearSharedImage();if($('#manage-dialog').open)$('#manage-dialog').close();if($('#month-adjust-dialog').open)$('#month-adjust-dialog').close();if($('#payment-dialog').open)$('#payment-dialog').close();if($('#dialog').open)$('#dialog').close();updateAccount();
+ backupUI?.clear();clearInlinePeople();clearConnections();clearProposals();if($('#entity-dialog').open)$('#entity-dialog').close();if($('#directory-dialog').open)$('#directory-dialog').close();$('#directory-list').innerHTML='';if($('#bank-status-dialog').open)$('#bank-status-dialog').close();if($('#share-dialog').open)$('#share-dialog').close();clearSharedImage();if($('#manage-dialog').open)$('#manage-dialog').close();if($('#month-adjust-dialog').open)$('#month-adjust-dialog').close();if($('#payment-dialog').open)$('#payment-dialog').close();if($('#dialog').open)$('#dialog').close();updateAccount();
  if(cloud.session()){try{await loadCloud();}catch(error){showCloudProblem(error);}}
  if(!data&&!$('#account-dialog').open)$('#account-dialog').showModal();
 });
-async function refreshIfNeeded(){if(mode!=='cloud'||monthSaving||document.hidden||Date.now()-lastCloudRead<15000||$('#dialog').open||$('#account-dialog').open||$('#payment-dialog').open||$('#month-adjust-dialog').open||$('#manage-dialog').open||$('#bank-status-dialog').open||$('#entity-dialog').open||$('#directory-dialog').open||$('#connections-dialog').open||$('#proposals-dialog').open||$('#proposal-review-dialog').open)return;try{await loadCloud();}catch(error){showCloudProblem(error);}}
+async function refreshIfNeeded(){if(mode!=='cloud'||monthSaving||document.hidden||Date.now()-lastCloudRead<15000||$('#dialog').open||$('#account-dialog').open||$('#payment-dialog').open||$('#month-adjust-dialog').open||$('#manage-dialog').open||$('#bank-status-dialog').open||$('#entity-dialog').open||$('#directory-dialog').open||$('#connections-dialog').open||$('#backup-dialog').open||$('#proposals-dialog').open||$('#proposal-review-dialog').open)return;try{await loadCloud();}catch(error){showCloudProblem(error);}}
 window.addEventListener('focus',refreshIfNeeded);setInterval(refreshIfNeeded,60000);
 try{
  $('#new').disabled=true;$('#export').disabled=true;
@@ -384,3 +385,5 @@ $('#inline-share').onclick=()=>{if(!selectedPerson||!data)return;$('#payment-per
 $('#inline-manage-people').onclick=()=>$('#people-manage').click();$('#inline-manage-cards').onclick=()=>$('#cards-manage').click();
 $('#organize-open').onclick=()=>{if(!data){$('#account-open').click();return;}$('#organize-dialog').showModal();};$('#organize-close').onclick=()=>$('#organize-dialog').close();
 $('#organize-dialog').addEventListener('click',e=>{if(e.target.closest('[data-close-menu]'))$('#organize-dialog').close();},true);
+
+backupUI=setupBackupUI({cloud,getLocal:()=>({data,added,owner:cloudOwner}),onRestored:async()=>{if(!await loadCloud())throw Error('Actualiza Mi cuenta para cargar los datos restaurados.');}});
