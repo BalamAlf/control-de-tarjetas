@@ -54,3 +54,12 @@ test('Gestión envía identificador, acción y mes exactos sin alterar la compra
 test('El estado bancario envía false y el mes sin inventar importe o fecha de pago',async()=>{let sent;const client=new CardCloud(config,{storage:storage(),fetcher:async(url,o)=>{sent=JSON.parse(o.body);return response({cardId:'card',month:'2026-11',status:{paid:false}});}});client.storeSession(session);await client.saveBankPayment('card','2026-11',false);assert.deepEqual(sent,{p_card_id:'card',p_month:'2026-11',p_paid:false});});
 
 test('Editar entidad conserva revisión cero y no envía listas completas',async()=>{let sent;const client=new CardCloud(config,{storage:storage(),fetcher:async(url,o)=>{sent=JSON.parse(o.body);return response({id:'example',name:'Nuevo nombre'});}});client.storeSession(session);await client.saveEntity({kind:'people',id:'example',name:'Nuevo nombre',archived:true,revision:0});assert.deepEqual(sent,{p_kind:'people',p_id:'example',p_name:'Nuevo nombre',p_bank:'',p_archived:true,p_revision:0});});
+
+test('Administrar accesos usa la sesión y solo envía perfil o identificador',async()=>{
+ const calls=[],store=storage();const client=new CardCloud(config,{storage:store,fetcher:async(url,options)=>{calls.push({url,body:JSON.parse(options.body)});return response([]);}});client.storeSession(session);
+ await client.connections();await client.createConnection('proposals');await client.disconnect('credential-id');
+ assert.ok(calls[0].url.endsWith('/rpc/ct_list_connections'));assert.deepEqual(calls[0].body,{});
+ assert.ok(calls[1].url.endsWith('/rpc/ct_create_connection'));assert.deepEqual(calls[1].body,{p_profile:'proposals'});
+ assert.ok(calls[2].url.endsWith('/rpc/ct_disconnect'));assert.deepEqual(calls[2].body,{p_id:'credential-id'});
+ assert.equal(store.getItem(client.sessionKey).includes('ctr_'),false);
+});

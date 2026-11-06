@@ -1,12 +1,12 @@
 # API de lectura para Polilla
 
-Implementada y probada localmente con datos ficticios. Todavía no desplegada ni conectada a Muse. No registra compras, no marca pagos y no administra personas. Las únicas escrituras internas son contadores de uso y auditoría mínima de acceso.
+Desplegada en ensayo y en la aplicación real; el usuario confirmó consultas desde Polilla. No registra compras, no marca pagos y no administra personas. Las únicas escrituras internas son contadores de uso y auditoría mínima de acceso.
 
 ## Qué incluye
 
-GET /connection, /people, /cards, /purchases, /installments y /monthly-summary. Base pública futura: `https://<PROJECT_REF>.supabase.co/functions/v1/reader/v1`.
+GET /connection, /people, /cards, /purchases, /installments y /monthly-summary. Formato de la base pública: `https://<PROJECT_REF>.supabase.co/functions/v1/reader/v1`.
 
-Todos requieren `Authorization: Bearer <credencial exclusiva>`. No usar contraseña, sesión del navegador, clave publicable ni clave administrativa. El token opaco solo funciona en esta API, no como un JWT de Supabase. El servidor guarda su hash, propietario, permisos, caducidad y revocación.
+Todos requieren `Authorization: Bearer <credencial exclusiva>`. No usar contraseña, sesión del navegador, clave publicable ni clave administrativa. El token opaco solo funciona en esta API, no como un JWT de Supabase. El servidor guarda su hash, propietario, permisos, caducidad opcional y revocación. Con la migración 008, los accesos de la página no caducan automáticamente; ver [Administrar accesos](CONNECTIONS.md). Los ensayos pueden seguir usando duración finita.
 
 Permisos: connection:read, people:read, cards:read, purchases:read, installments:read y summary:read. Los valida la base en cada consulta. 30 solicitudes por minuto por credencial, incluida la comprobación de conexión; cada página cuenta. Una revocación bloquea solicitudes posteriores a su confirmación; una solicitud ya autorizada podría estar en curso.
 

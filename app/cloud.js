@@ -93,6 +93,9 @@ export class CardCloud {
     catch(error){if(error.code==='PGRST202')throw new CloudError('Falta activar las propuestas en Supabase.',error.status,error.code);throw error;}
   }
   decideProposal(p,decision){return this.request('/rest/v1/rpc/ct_decide_proposal',{method:'POST',body:{p_id:p.id,p_hash:p.contentHash,p_version:p.version,p_decision:decision}});}
+  connections(){return this.request('/rest/v1/rpc/ct_list_connections',{method:'POST',body:{}});}
+  createConnection(profile){return this.request('/rest/v1/rpc/ct_create_connection',{method:'POST',body:{p_profile:profile}});}
+  disconnect(id){return this.request('/rest/v1/rpc/ct_disconnect',{method:'POST',body:{p_id:id}});}
   async signOut() {
     const session=this.session();
     // Clear this device even when the remote logout is temporarily unavailable.

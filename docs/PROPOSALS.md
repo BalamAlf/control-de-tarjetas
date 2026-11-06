@@ -22,7 +22,7 @@ No se aceptan otros campos (en especial owner, confirmed o paid). El importe es 
 
 ## Permisos y acceso
 
-El conector de lectura actual conserva sus seis permisos y no puede proponer compras. Emitir una credencial DIFERENTE con proposals:read y proposals:write mediante ct_issue_reader. Usar un conector separado «Tarjetas Propuestas»; el conector lector sirve para resolver personas y tarjetas. Estos permisos no conceden confirmación, consulta directa de tablas o acceso a las funciones autenticadas del propietario.
+El conector de lectura actual conserva sus seis permisos y no puede proponer compras. Emitir una credencial DIFERENTE con proposals:read y proposals:write desde **Accesos de Polilla** con el perfil Propuestas (migración 008). Ver [Administrar accesos](CONNECTIONS.md). El token no caduca automáticamente; la propuesta mantiene su vigencia de diez minutos. La emisión administrativa ct_issue_reader sigue disponible para ensayos finitos. Usar un conector separado «Tarjetas Propuestas»; el conector lector sirve para resolver personas y tarjetas. Estos permisos no conceden confirmación, consulta directa de tablas o acceso a las funciones autenticadas del propietario.
 
 La ruta POST crea solo una propuesta y devuelve 201; un reintento devuelve 200 y el mismo registro. Antes de afirmar que se registró una compra, consultar status=committed y purchaseId. Un timeout deja el resultado desconocido; consultar por intención antes de repetir con la misma clave. Nunca generar otra clave para resolver un timeout.
 

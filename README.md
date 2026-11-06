@@ -54,3 +54,7 @@ Ejecutar `supabase/005_entities.sql` después de las migraciones anteriores. El 
 ## Propuestas de Polilla
 
 La integración puede preparar compras normales y MSI con permisos específicos, sin aprobarlas. El propietario revisa y decide desde Propuestas de Polilla en la página. Cada propuesta tiene hash, versión, intención idempotente y vigencia de diez minutos. Ver `docs/PROPOSALS.md` y `supabase/007_proposals.sql`. Los permisos del lector existente no cambian; el conector de propuestas usa otra credencial.
+
+## Accesos de Polilla
+
+La sección **Accesos de Polilla** permite generar y revocar los accesos de lectura o propuestas desde la cuenta autenticada. Los nuevos tokens no caducan automáticamente. Las propuestas siguen requiriendo confirmación y vencen a los diez minutos. Instalar `supabase/008_connections.sql` después de las migraciones anteriores. Guía: [docs/CONNECTIONS.md](docs/CONNECTIONS.md).
