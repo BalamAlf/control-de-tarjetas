@@ -59,6 +59,6 @@ Marcar «Pagada al banco» conserva los cargos en el desglose y no inventa impor
 
 ## Auditoría y siguientes mejoras
 
-[Auditoría del 6 de noviembre de 2026](docs/AUDIT-2026-11-06.md): alcance, pruebas, límites y prioridades. La revisión detectó dos defectos reproducibles pendientes: renovación de sesión frente a cierre en otra pestaña y conservación de archivos antiguos dentro del directorio publicado. No se modificó la lógica ni la base de producción en esa auditoría.
+[Auditoría del 6 de noviembre de 2026](docs/AUDIT-2026-11-06.md): alcance, pruebas, límites y prioridades. La revisión detectó dos defectos reproducibles: renovación de sesión frente a cierre en otra pestaña y conservación de archivos antiguos dentro del directorio publicado. Ambos están corregidos en el fuente; requieren publicar el frontend actualizado. Ver [mejoras preparadas y tres propuestas de diseño](docs/MEJORAS.md). La auditoría original se conserva como registro de lo observado.
 
-Prioridad: corregir esos defectos, mejorar recuperación/restauración y automatizar pruebas/publicación. Después, proponer ajustes de recurrentes por voz con revisión. Las cuentas individuales para consultar una deuda y las finanzas personales quedan para una etapa posterior.
+Prioridad: publicar las correcciones, elegir el rediseño, mejorar recuperación/restauración y automatizar pruebas/publicación. Después, proponer ajustes de recurrentes por voz con revisión. Las cuentas individuales para consultar una deuda y las finanzas personales quedan para una etapa posterior.

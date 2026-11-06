@@ -30,3 +30,5 @@ Habilitar personas y tarjetas.sql
 
 .reader-release/
 .proposals-release/
+
+.build-*/

@@ -50,14 +50,21 @@ export class CardCloud {
     const work=async()=>{
       const session=this.session();if(!session)throw new CloudError('Vuelve a iniciar sesión.',401);
       if(session.expires_at>this.now()/1000+60)return session;
-      try{return this.storeSession(await this.raw('/auth/v1/token?grant_type=refresh_token',{method:'POST',body:{refresh_token:session.refresh_token}}));}
-      catch(error){if(error.status===400||error.status===401)this.storage.removeItem(this.sessionKey);throw error;}
+      const original=this.storage.getItem(this.sessionKey);
+      try{
+        const renewed=await this.raw('/auth/v1/token?grant_type=refresh_token',{method:'POST',body:{refresh_token:session.refresh_token}});
+        if(this.storage.getItem(this.sessionKey)!==original)throw new CloudError('La sesión cambió. Vuelve a cargar los datos.',401);
+        if(renewed.user?.id!==session.user.id)throw new CloudError('La renovación no coincide con tu cuenta.',401);
+        return this.storeSession(renewed);
+      }catch(error){if((error.status===400||error.status===401)&&this.storage.getItem(this.sessionKey)===original)this.storage.removeItem(this.sessionKey);throw error;}
     };
     return globalThis.navigator?.locks?globalThis.navigator.locks.request(this.sessionKey,work):work();
   }
   async request(path,options={}) {
     const session=this.session();if(!session)throw new CloudError('Inicia sesión para continuar.',401);
-    const result=await this.raw(path,{...options,token:await this.token()});
+    const token=await this.token();
+    if(this.session()?.user?.id!==session.user.id)throw new CloudError('La cuenta cambió. Vuelve a cargar los datos.');
+    const result=await this.raw(path,{...options,token});
     if(this.session()?.user?.id!==session.user.id)throw new CloudError('La cuenta cambió. Vuelve a cargar los datos.');
     return result;
   }
@@ -98,8 +105,8 @@ export class CardCloud {
   disconnect(id){return this.request('/rest/v1/rpc/ct_disconnect',{method:'POST',body:{p_id:id}});}
   async signOut() {
     const session=this.session();
-    // Clear this device even when the remote logout is temporarily unavailable.
-    try{if(session)await this.raw('/auth/v1/logout?scope=local',{method:'POST',token:await this.token()});}
-    finally{this.storage.removeItem(this.sessionKey);}
+    // Close locally immediately; a late response must not erase a newer login.
+    this.storage.removeItem(this.sessionKey);
+    if(session)await this.raw('/auth/v1/logout?scope=local',{method:'POST',token:session.access_token});
   }
 }

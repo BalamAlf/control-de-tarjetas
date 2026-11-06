@@ -63,3 +63,23 @@ test('Administrar accesos usa la sesión y solo envía perfil o identificador',a
  assert.ok(calls[2].url.endsWith('/rpc/ct_disconnect'));assert.deepEqual(calls[2].body,{p_id:'credential-id'});
  assert.equal(store.getItem(client.sessionKey).includes('ctr_'),false);
 });
+
+for(const change of ['logout','new-login'])test('Una renovación tardía respeta '+change,async()=>{
+ let complete,started;const began=new Promise(r=>started=r),store=storage();
+ const client=new CardCloud(config,{storage:store,now:()=>100000,fetcher:async()=>{started();return new Promise(r=>complete=()=>r(response(session)));}});
+ client.storeSession({...session,expires_in:1});const pending=client.refresh();await began;
+ if(change==='logout')store.removeItem(client.sessionKey);else client.storeSession({...session,access_token:'new-access',user:{id:'new-owner'}});
+ complete();await assert.rejects(pending,/sesión cambió/);assert.equal(client.session()?.user?.id,change==='logout'?undefined:'new-owner');
+});
+test('Un error de renovación tardío no borra un acceso nuevo',async()=>{
+ let complete,started;const began=new Promise(r=>started=r);const client=new CardCloud(config,{storage:storage(),now:()=>100000,fetcher:async()=>{started();return new Promise(r=>complete=()=>r(response({message:'expired'},401)));}});
+ client.storeSession({...session,expires_in:1});const pending=client.refresh();await began;client.storeSession({...session,access_token:'new-access',user:{id:'new-owner'}});complete();await assert.rejects(pending);assert.equal(client.session().user.id,'new-owner');
+});
+test('Salir borra la sesión enseguida y no borra un inicio posterior',async()=>{
+ let complete;const client=new CardCloud(config,{storage:storage(),fetcher:async()=>new Promise(r=>complete=()=>r(response({})))});client.storeSession(session);
+ const pending=client.signOut();assert.equal(client.session(),null);client.storeSession({...session,user:{id:'new-owner'}});complete();await pending;assert.equal(client.session().user.id,'new-owner');
+});
+test('Si la cuenta cambia mientras se obtiene el token, no se envía la escritura',async()=>{
+ let sent=0;const client=new CardCloud(config,{storage:storage(),fetcher:async()=>{sent++;return response({});}});client.storeSession(session);client.token=async()=>{client.storeSession({...session,user:{id:'new-owner'}});return 'new-token';};
+ await assert.rejects(client.savePurchase({id:'old-purchase'}),/cuenta cambió/);assert.equal(sent,0);
+});
