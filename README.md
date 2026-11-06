@@ -50,3 +50,7 @@ Ejecutar `supabase/004_bank_payments.sql` en la cuenta existente y actualizar Ne
 Los botones visibles Personas · agregar y editar y Tarjetas y pagos al banco abren la administración de la cuenta. Agregar y Editar permiten cambiar nombres y alias; archivar impide nuevas compras sin borrar el historial. Restaurar se hace desmarcando Archivar. Los estados bancarios se confirman por tarjeta y mes. No se lleva un registro de abonos de personas.
 
 Ejecutar `supabase/005_entities.sql` después de las migraciones anteriores. El archivo local Habilitar personas y tarjetas.sql reúne las capacidades bancarias y de administración para esta entrega. El servidor conserva identificadores, valida propietario y revisión para evitar reemplazar una edición de otro dispositivo, y bloquea nuevas compras sobre personas o tarjetas archivadas.
+
+## Propuestas de Polilla
+
+La integración puede preparar compras normales y MSI con permisos específicos, sin aprobarlas. El propietario revisa y decide desde Propuestas de Polilla en la página. Cada propuesta tiene hash, versión, intención idempotente y vigencia de diez minutos. Ver `docs/PROPOSALS.md` y `supabase/007_proposals.sql`. Los permisos del lector existente no cambian; el conector de propuestas usa otra credencial.

@@ -88,6 +88,11 @@ export class CardCloud {
     try{return await this.request('/rest/v1/rpc/ct_save_entity',{method:'POST',body:{p_kind:change.kind,p_id:change.id,p_name:change.name,p_bank:change.bank||'',p_archived:change.archived,p_revision:change.revision}});}
     catch(error){if(error.code==='PGRST202')throw new CloudError('Ejecuta Habilitar personas y tarjetas.sql en SQL Editor para activar la administración.',error.status,error.code);throw error;}
   }
+  async proposals(){
+    try{return await this.request('/rest/v1/rpc/ct_list_proposals',{method:'POST',body:{}});}
+    catch(error){if(error.code==='PGRST202')throw new CloudError('Falta activar las propuestas en Supabase.',error.status,error.code);throw error;}
+  }
+  decideProposal(p,decision){return this.request('/rest/v1/rpc/ct_decide_proposal',{method:'POST',body:{p_id:p.id,p_hash:p.contentHash,p_version:p.version,p_decision:decision}});}
   async signOut() {
     const session=this.session();
     // Clear this device even when the remote logout is temporarily unavailable.

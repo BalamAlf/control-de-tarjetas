@@ -1,2 +1,5 @@
 [functions.reader]
 verify_jwt = false
+
+[functions.proposals]
+verify_jwt = false
