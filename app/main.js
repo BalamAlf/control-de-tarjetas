@@ -4,7 +4,7 @@ import {supabaseConfig} from './config.js';
 import {report,validatePurchase,cents,paymentBreakdown,bankPeriod,validateMonthAdjustment,withMonthAdjustment} from './finance.js';
 const $=s=>document.querySelector(s), money=v=>new Intl.NumberFormat('es-MX',{style:'currency',currency:'MXN'}).format(v/100);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-let data,added=[],mode='local',saving=false,cloudBusy=false,captureId=null,lastCloudRead=0,cloudOwner=null,monthSaving=false,editContext=null;const entityKey='control-tarjetas-entities-v1';const bankKey='control-tarjetas-bank-v1';const controlKey='control-tarjetas-controls-v1';const adjustmentKey='control-tarjetas-monthly-v1';const key='control-tarjetas-new-v1';
+let data,added=[],mode='local',saving=false,cloudBusy=false,captureId=null,lastCloudRead=0,cloudOwner=null,monthSaving=false,editContext=null,selectedPerson='',activeView='month-view';const entityKey='control-tarjetas-entities-v1';const bankKey='control-tarjetas-bank-v1';const controlKey='control-tarjetas-controls-v1';const adjustmentKey='control-tarjetas-monthly-v1';const key='control-tarjetas-new-v1';
 const cloud=new CardCloud(supabaseConfig);
 const shortcutRequested=new URL(location.href).searchParams.get('nuevo')==='1';let shortcutOpened=false;
 const isLocal=['localhost','127.0.0.1','[::1]'].includes(location.hostname);
@@ -36,9 +36,9 @@ function render(){
  $('#card-totals').innerHTML=data.cards.map((card,i)=>{const total=[...result.cells].reduce((s,[k,v])=>s+(k.split('|')[1]===card.id?v:0),0);return `<article class="bank-tile" data-color="${i%4}"><div class="bank-heading"><span class="bank-symbol" aria-hidden="true">${esc(cardLabel(card).slice(0,1))}</span><span>${esc(cardLabel(card))}</span></div><strong>${historical?'Sin determinar':money(total)}</strong><span class="tile-caption ${bankByCard.get(card.id)?.status==='pending'?'bank-pending':''}">${bankByCard.get(card.id)?.status==='pending'?'Pendiente al banco':bankByCard.get(card.id)?.status==='paid'?'Pagada al banco':bankByCard.get(card.id)?.status==='review'?'Pago por confirmar':'Previsto este mes'}</span>${!historical?`<button type="button" class="secondary bank-status-button" data-bank-card="${esc(card.id)}" aria-label="${bankByCard.get(card.id)?.status==='paid'?'Dejar pendiente':'Marcar pagada al banco'} ${esc(cardLabel(card))}">${bankByCard.get(card.id)?.status==='paid'?'Dejar pendiente':'Marcar pagada al banco'}</button>`:''}</article>`;}).join('');
  const monthLabel=new Intl.DateTimeFormat('es-MX',{month:'long',year:'numeric',timeZone:'UTC'}).format(new Date(month+'-01T12:00:00Z'));
  $('#total-label').textContent=(result.isSnapshot?'Cargos del mes · ':'Total previsto · ')+monthLabel; if(result.adjustmentCount)$('#notice').dataset.adjusted='true';else delete $('#notice').dataset.adjusted;
- $('#scheduled-label').textContent='MSI y compras programadas';
- $('#recurring-label').textContent='Recurrentes del mes';
- $('#scheduled-hint').textContent='Cuotas del mes seleccionado';
+ $('#scheduled-label').textContent='Compras y MSI';
+ $('#recurring-label').textContent='Recurrentes';
+ $('#scheduled-hint').textContent='Cuotas de este mes';
  $('#recurring-hint').textContent=result.estimated?'Importes de referencia por confirmar':'Importes del mes seleccionado';
  $('#breakdown').textContent=historical?'No hay datos confirmados para reconstruir este mes.':`${money(result.total-recurringTotal)} en MSI${newNormalTotal?' y compras con mes confirmado':''} + ${money(recurringTotal)} en recurrentes`;
  $('#notice').classList.toggle('warning',historical||result.unknown.length>0||result.isSnapshot);
@@ -56,11 +56,21 @@ function render(){
  $('#purchases tbody').innerHTML=purchaseRows.map(p=>{const c=data.purchaseControls?.[p.id];return '<tr>'+[p.description,name(p.person,data.people),name(p.card,data.cards),money(cents(p.amount)),p.terms,p.paid??'Sin dato'].map(v=>'<td>'+esc(v)+'</td>').join('')+'<td>'+(c?.deleted?'<span>En papelera · excluida de todos los meses</span>':c?.endMonth?'<span>Sin cargos desde '+esc(formatMonth(c.endMonth))+'</span>':'Activa')+managementActions(p,true)+'</td></tr>';}).join('');
  $('#purchases thead tr').insertAdjacentHTML('beforeend','<th>Gestionar</th>');
  const unresolved=result.unknown;
- $('#pending-count').textContent=`(${unresolved.length})`;
+ $('#pending-count').textContent=unresolved.length?String(unresolved.length):'';
  table('#pending',['Concepto','Persona','Tarjeta','Importe original','Qué falta'],unresolved.map(p=>[p.description,name(p.person,data.people),name(p.card,data.cards),money(cents(p.amount)),p.reviewReason||'Confirmar tipo o periodo de cobro']));
+ $('#month-display').textContent=new Intl.DateTimeFormat('es-MX',{month:'long',year:'numeric',timeZone:'UTC'}).format(new Date(month+'-01T12:00:00Z')).replace(' de ',' ');
+ renderInlinePeople(result,historical,active);
 }
-document.querySelectorAll('[data-view]').forEach(button=>{button.setAttribute('aria-pressed',String(button.classList.contains('selected')));button.onclick=()=>{document.querySelectorAll('.view').forEach(v=>v.hidden=v.id!==button.dataset.view);document.querySelectorAll('.tab').forEach(b=>{b.classList.toggle('selected',b===button);b.setAttribute('aria-pressed',String(b===button));});};});
+function showView(id){
+ if(!data){$('#account-open').click();return;}
+ activeView=id;document.querySelectorAll('.view').forEach(v=>v.hidden=v.id!==id);
+ document.querySelectorAll('[data-view]').forEach(b=>{const current=b.dataset.view===id;b.classList.toggle('selected',current);b.setAttribute('aria-pressed',String(current));});
+ const labels={'month-view':['Personas','¿Cuánto le toca a cada quien?','Elige una persona y revisa su mes.'],'cards-view':['Tarjetas','Tus tarjetas, al día.','Revisa el estado de cada tarjeta este mes.'],'purchases-view':['Compras','Tus compras','Compras originales, nuevas y papelera en un solo lugar.'],'pending-view':['Por revisar','Lo que falta confirmar','Revisa estos datos antes de incluirlos en el total.']};
+ const text=labels[id];$('#view-name').textContent=text[0];$('#view-heading').textContent=text[1];$('#view-description').textContent=text[2];document.title='Mis tarjetas · '+text[0];
+}
+document.querySelectorAll('[data-view]').forEach(button=>{button.setAttribute('aria-pressed',String(button.classList.contains('selected')));button.onclick=()=>showView(button.dataset.view);});
 $('#month').onchange=render;
+$('#month').addEventListener('click',()=>{try{$('#month').showPicker?.();}catch{/* Keep the native picker fallback. */}});
 for(const [id,step]of [['previous-month',-1],['next-month',1]])$('#'+id).onclick=()=>{const value=$('#month').value;if(!value)return;const [y,m]=value.split('-').map(Number);const next=new Date(Date.UTC(y,m-1+step,1));$('#month').value=next.toISOString().slice(0,7);render();};
 $('#new').onclick=()=>{captureId=crypto.randomUUID();$('#error').textContent='';$('#form').elements.start.value=$('#month').value;$('#dialog').showModal();};
 $('#close').onclick=()=>$('#dialog').close();
@@ -98,8 +108,8 @@ function updateAccount(){
  $('#sync-description').textContent=mode==='cloud'?(isLocal?'Tus compras se guardan en tu cuenta. Podrás consultarlas desde otros dispositivos al publicar la aplicación.':'Tus compras se guardan en tu cuenta. Usa este mismo acceso en tus otros dispositivos.'):'La sesión está abierta. Falta preparar o importar las compras para activar la sincronización.';
 }
 function markCloudReady(){
- mode='cloud';cloudOwner=cloud.session()?.user?.id;lastCloudRead=Date.now();document.body.classList.add('cloud-mode');$('#connection-status').textContent='Conectado a Supabase';
- $('#storage-note').textContent='Compras guardadas en tu cuenta de Supabase.';$('#deployment-note').textContent=isLocal?'Conexión privada lista. Publicación en Netlify y Atajo del iPhone pendientes.':'Tu cuenta está sincronizada con Supabase. El Atajo del iPhone está pendiente de configurar.';
+ mode='cloud';cloudOwner=cloud.session()?.user?.id;lastCloudRead=Date.now();document.body.classList.add('cloud-mode');$('#connection-status').textContent='Cuenta sincronizada';
+ $('#storage-note').textContent='Tus compras están guardadas en tu cuenta.';$('#deployment-note').textContent='El mes corresponde al pago previsto. Consultarlo no registra pagos ni transferencias.';
  $('#cloud-banner').hidden=true;updateAccount();
 }
 function showCloudProblem(error){
@@ -156,7 +166,7 @@ $('#import-local').onclick=async()=>{
 };
 $('#sign-out').onclick=async()=>{
  try{await cloud.signOut();}catch{accountMessage('La sesión de este dispositivo se cerró.');}
- clearConnections();clearProposals();if($('#entity-dialog').open)$('#entity-dialog').close();if($('#directory-dialog').open)$('#directory-dialog').close();$('#directory-list').innerHTML='';if($('#bank-status-dialog').open)$('#bank-status-dialog').close();if($('#share-dialog').open)$('#share-dialog').close();clearSharedImage();mode='local';data=undefined;added=[];document.body.classList.remove('cloud-mode');
+ clearInlinePeople();clearConnections();clearProposals();if($('#entity-dialog').open)$('#entity-dialog').close();if($('#directory-dialog').open)$('#directory-dialog').close();$('#directory-list').innerHTML='';if($('#bank-status-dialog').open)$('#bank-status-dialog').close();if($('#share-dialog').open)$('#share-dialog').close();clearSharedImage();mode='local';data=undefined;added=[];document.body.classList.remove('cloud-mode');
  for(const id of ['matrix','details','purchases','pending','card-totals','mobile-people','payment-lines'])$('#'+id).innerHTML='';
  $('#total').textContent='—';$('#scheduled-total').textContent='—';$('#recurring-total').textContent='—';$('#new').disabled=true;$('#export').disabled=true;$('#main-content').hidden=true;$('#connection-status').textContent='Sin sesión';
  if(isLocal)await loadLocal();updateAccount();accountMessage('Sesión cerrada en este dispositivo.');
@@ -166,7 +176,7 @@ window.addEventListener('storage',async event=>{
  data=undefined;added=[];mode='local';document.body.classList.remove('cloud-mode');$('#main-content').hidden=true;$('#new').disabled=true;$('#export').disabled=true;
  for(const id of ['matrix','details','purchases','pending','card-totals','mobile-people','payment-lines'])$('#'+id).innerHTML='';
  $('#total').textContent='—';$('#scheduled-total').textContent='—';$('#recurring-total').textContent='—';$('#connection-status').textContent='Acceso actualizado';
- clearConnections();clearProposals();if($('#entity-dialog').open)$('#entity-dialog').close();if($('#directory-dialog').open)$('#directory-dialog').close();$('#directory-list').innerHTML='';if($('#bank-status-dialog').open)$('#bank-status-dialog').close();if($('#share-dialog').open)$('#share-dialog').close();clearSharedImage();if($('#manage-dialog').open)$('#manage-dialog').close();if($('#month-adjust-dialog').open)$('#month-adjust-dialog').close();if($('#payment-dialog').open)$('#payment-dialog').close();if($('#dialog').open)$('#dialog').close();updateAccount();
+ clearInlinePeople();clearConnections();clearProposals();if($('#entity-dialog').open)$('#entity-dialog').close();if($('#directory-dialog').open)$('#directory-dialog').close();$('#directory-list').innerHTML='';if($('#bank-status-dialog').open)$('#bank-status-dialog').close();if($('#share-dialog').open)$('#share-dialog').close();clearSharedImage();if($('#manage-dialog').open)$('#manage-dialog').close();if($('#month-adjust-dialog').open)$('#month-adjust-dialog').close();if($('#payment-dialog').open)$('#payment-dialog').close();if($('#dialog').open)$('#dialog').close();updateAccount();
  if(cloud.session()){try{await loadCloud();}catch(error){showCloudProblem(error);}}
  if(!data&&!$('#account-dialog').open)$('#account-dialog').showModal();
 });
@@ -356,3 +366,21 @@ $('#connection-create').onclick=async()=>{if(connectionBusy)return;if(mode!=='cl
  try{const r=await cloud.createConnection($('#connection-profile').value);if(!/^ctr_[a-f0-9]{64}$/.test(r.token)||r.expiresAt!==null)throw Error('Respuesta inesperada: actualiza la lista antes de repetir.');$('#connection-token').value=r.token;$('#connection-secret').hidden=false;$('#connections-status').textContent='Acceso creado, sin caducidad automática. Su identificador termina en '+r.credentialId.slice(-8)+'.';await loadConnections();}catch(error){$('#connections-status').textContent=error.message+' Si no recibiste el token, actualiza la lista y revoca ese acceso antes de generar otro.';}finally{connectionBusy=false;$('#connection-create').disabled=false;$('#connections-close').disabled=false;}};
 $('#connection-copy').onclick=async()=>{try{await navigator.clipboard.writeText($('#connection-token').value);$('#connections-status').textContent='Token copiado. Pégalo en la página segura de Polilla.';}catch{$('#connection-token').select();$('#connections-status').textContent='Selecciona y copia el token manualmente.';}};
 $('#connections-list').addEventListener('click',async e=>{const b=e.target.closest('[data-disconnect]');if(!b||connectionBusy)return;if(!confirm('¿Revocar este acceso? Polilla dejará de poder usarlo. No borra compras ni cancela propuestas ya creadas.'))return;connectionBusy=true;b.disabled=true;try{await cloud.disconnect(b.dataset.disconnect);hideConnectionToken();$('#connections-status').textContent='Acceso revocado.';await loadConnections();}catch(error){$('#connections-status').textContent=error.message;}finally{connectionBusy=false;b.disabled=false;}});
+
+function clearInlinePeople(){selectedPerson='';$('#person-list').innerHTML='';$('#inline-person-name').textContent='Elige una persona';$('#inline-person-total').textContent='—';$('#inline-person-cards').innerHTML='';$('#inline-person-note').textContent='';if($('#organize-dialog').open)$('#organize-dialog').close();}
+function renderInlinePeople(result,historical,people){
+ if(!people.some(p=>p.id===selectedPerson))selectedPerson=people.find(p=>result.lines.some(x=>x.person===p.id))?.id||people[0]?.id||'';
+ $('#person-list').innerHTML=people.map(p=>{const total=result.lines.filter(x=>x.person===p.id).reduce((n,x)=>n+x.value,0),count=new Set([...result.lines,...result.skipped,...result.unknown].filter(x=>x.person===p.id).map(x=>x.card)).size;return `<button type="button" class="person-choice ${p.id===selectedPerson?'selected':''}" data-select-person="${esc(p.id)}" aria-pressed="${p.id===selectedPerson}"><span class="avatar" aria-hidden="true">${esc(p.name.slice(0,1))}</span><span class="choice-name"><b>${esc(p.name)}</b><small>${p.archived?'Archivada':count+' '+(count===1?'tarjeta':'tarjetas')}</small></span><strong>${historical?'Sin determinar':money(total)}</strong></button>`;}).join('')||'<p class="section-help">Agrega una persona desde Editar para empezar.</p>';
+ const person=people.find(p=>p.id===selectedPerson);$('#inline-share').disabled=!person;$('#inline-details').disabled=!person;if(!person){$('#inline-person-name').textContent='Sin personas';$('#inline-person-total').textContent='—';$('#inline-person-cards').innerHTML='';$('#inline-person-note').textContent='';return;}
+ const r=paymentBreakdown(data,$('#month').value,added,person.id),banks=bankPeriod(data,$('#month').value,result);
+ $('#inline-person-name').textContent=person.name;$('#inline-person-total').textContent=historical?'Sin determinar':money(r.total);
+ $('#inline-person-cards').innerHTML=data.cards.filter(c=>[...r.lines,...r.skipped,...r.unknown].some(x=>x.card===c.id)).map(c=>{const amount=r.lines.filter(x=>x.card===c.id).reduce((n,x)=>n+x.value,0),unknown=r.unknown.filter(x=>x.card===c.id).length,status=banks.find(x=>x.card===c.id)?.status;return `<button type="button" class="inline-card" data-inline-card="${esc(c.id)}"><span class="card-symbol" aria-hidden="true">${esc(cardLabel(c).slice(0,1))}</span><span><b>${esc(cardLabel(c))}</b><small>${unknown?unknown+' por confirmar':status==='paid'?'Tarjeta pagada al banco':status==='pending'?'Tarjeta pendiente al banco':'Cargos de este mes'}</small></span><strong>${historical?'Sin determinar':money(amount)}</strong><span aria-hidden="true">›</span></button>`;}).join('')||'<p class="empty-payment">'+(historical?'No hay historial confirmado para este mes.':'Sin cargos incluidos este mes.')+'</p>';
+ $('#inline-person-note').textContent=historical?'Falta información para reconstruir este periodo.':r.unknown.length?r.unknown.length+' registros fuera del total o por confirmar. Revisa el detalle antes de compartir.':r.estimated?'Incluye recurrentes de referencia: confirma su importe y vigencia.':'Incluye sus cargos previstos del mes. No acredita pagos recibidos.';
+}
+$('#person-list').addEventListener('click',e=>{const b=e.target.closest('[data-select-person]');if(!b||!data)return;selectedPerson=b.dataset.selectPerson;render();});
+$('#inline-person-cards').addEventListener('click',e=>{const b=e.target.closest('[data-inline-card]');if(b&&selectedPerson)openPayment(selectedPerson,b.dataset.inlineCard);});
+$('#inline-details').onclick=()=>{if(selectedPerson)openPayment(selectedPerson);};
+$('#inline-share').onclick=()=>{if(!selectedPerson||!data)return;$('#payment-person').value=selectedPerson;$('#payment-card').value='';$('#payment-month').value=$('#month').value;renderPayment();$('#payment-share').click();};
+$('#inline-manage-people').onclick=()=>$('#people-manage').click();$('#inline-manage-cards').onclick=()=>$('#cards-manage').click();
+$('#organize-open').onclick=()=>{if(!data){$('#account-open').click();return;}$('#organize-dialog').showModal();};$('#organize-close').onclick=()=>$('#organize-dialog').close();
+$('#organize-dialog').addEventListener('click',e=>{if(e.target.closest('[data-close-menu]'))$('#organize-dialog').close();},true);

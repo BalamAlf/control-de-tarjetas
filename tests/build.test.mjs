@@ -7,6 +7,7 @@ test('El build excluye archivos antiguos, datos y fuentes fuera del manifiesto',
   await fs.writeFile(root+'/app/private-canary.txt','NOT PUBLIC');await fs.mkdir(root+'/dist/app',{recursive:true});await fs.writeFile(root+'/dist/app/stale.js','STALE');await fs.mkdir(root+'/.build-staging/app',{recursive:true});await fs.writeFile(root+'/.build-staging/app/stale.js','STALE');
   if(process.platform==='win32'){await fs.chmod(root+'/dist/app',0o444);await fs.chmod(root+'/dist',0o444);}
   await build(root);assert.deepEqual((await fs.readdir(root+'/dist')).sort(),['_headers','app','index.html']);assert.deepEqual((await fs.readdir(root+'/dist/app')).sort(),[...PUBLIC_APP_FILES].sort());
+  assert.match(await fs.readFile(root+'/dist/_headers','utf8'),/img-src 'self' data: blob:;/);
   await fs.writeFile(root+'/dist/app/stale-again.js','STALE');await build(root);assert.deepEqual((await fs.readdir(root+'/dist/app')).sort(),[...PUBLIC_APP_FILES].sort());
   const before=await fs.readFile(root+'/dist/index.html','utf8'),old=process.env.PUBLIC_SUPABASE_PUBLISHABLE_KEY;
   try{process.env.PUBLIC_SUPABASE_PUBLISHABLE_KEY='secret-not-for-browser';await assert.rejects(build(root),/clave publicable/);}finally{if(old===undefined)delete process.env.PUBLIC_SUPABASE_PUBLISHABLE_KEY;else process.env.PUBLIC_SUPABASE_PUBLISHABLE_KEY=old;}

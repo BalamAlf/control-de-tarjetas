@@ -1,5 +1,7 @@
 # Mejoras preparadas y revisión del diseño
 
+**Estado actualizado:** el propietario eligió B con paleta verde. Está integrado en el frontend; ver [detalle del rediseño](REDISENO.md). Requiere publicar el nuevo paquete en Netlify.
+
 ## Primera entrega preparada
 
 Se corrigieron los hallazgos A1 y A2 de la auditoría: renovación de sesión que respeta cierres/cambios de cuenta y publicación desde un manifiesto explícito en un directorio nuevo. La sesión se elimina localmente al solicitar salir y una respuesta tardía de logout no borra un acceso posterior. Una escritura comprueba la identidad también después de obtener el token, antes de enviarse.
@@ -10,7 +12,7 @@ Verificación: 63 pruebas locales aprobadas, de las que 36 son publicables. Las 
 
 ## Tres propuestas visuales por elegir
 
-El propietario pidió comparar alternativas antes de adoptar una. No se aplicó aún un rediseño a index.html ni al estilo de la aplicación.
+El propietario comparó las alternativas y eligió B con paleta verde. Las maquetas siguientes se conservan como referencia; el frontend real ya integra la opción elegida.
 
 - **A — Resumen claro:** navegación superior (inferior en iPhone), total compacto y personas/pagos en dos listas. Administrar queda en Organizar; una sola acción principal Nueva compra.
 - **B — Personas primero:** menú lateral, selector de persona y detalle visible al lado, con Compartir junto al nombre. En iPhone, personas seleccionables y navegación inferior.
@@ -20,9 +22,9 @@ Abrir [comparador](design/index.html). Los nombres e importes son ficticios. Las
 
 Probadas a 375, 390, 768, 1024 y 1440 píxeles: sin desbordamiento horizontal ni errores JavaScript; sin solicitudes de red. La revisión visual incluyó escritorio y móvil. La futura implementación conservará el detalle por persona/tarjeta y todos los controles existentes; elegir una propuesta no autoriza inferir importes ni modificar datos históricos.
 
-## Después de elegir diseño
+## Siguientes entregas
 
-1. Integrar la distribución y textos elegidos sobre las funciones reales, comprobar detalle, captura, pagos, recurrentes, propuestas, compartir y accesos en móvil.
+1. Publicar el diseño B verde ya integrado y revisar su uso cotidiano en la cuenta real. La comprobación de detalle, captura, pagos, recurrentes, propuestas, compartir y accesos con datos ficticios está completa.
 2. Preparar restauración de respaldo con validación, vista previa y prueba de recuperación en ensayo. No reconstruir desde el Excel ni mezclar propietarios automáticamente.
 3. Llevar pruebas SQL y navegador a una ejecución reproducible; añadir comprobaciones de GitHub. Publicación automática de Netlify solo después de revisar la configuración/costos del plan.
 4. Extender propuestas a ajustes mensuales de recurrentes, con revisión e idempotencia. Mantener el resto de meses y estados bancarios intactos.

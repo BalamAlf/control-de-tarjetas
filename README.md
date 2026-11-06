@@ -2,6 +2,10 @@
 
 Aplicación en español para elegir un mes y ver cuánto corresponde pagar a cada persona, con desglose por tarjeta y compra. Incluye compras normales, MSI y recurrentes. Los totales son cargos previstos; no acreditan transferencias ni abonos de personas.
 
+## Diseño actual
+
+**Personas primero, en verde.** Selecciona una persona para ver su total y el desglose por tarjeta al lado; Compartir prepara su resumen. La navegación lateral se convierte en barra inferior en el iPhone. Personas, tarjetas, accesos de Polilla, respaldo y Atajo se administran desde Organizar. [Detalle y validación](docs/REDISENO.md).
+
 ## Qué funciona
 
 - Resumen mensual, detalle por persona/tarjeta y ajuste de centavos en la última cuota MSI.
@@ -61,4 +65,4 @@ Marcar «Pagada al banco» conserva los cargos en el desglose y no inventa impor
 
 [Auditoría del 6 de noviembre de 2026](docs/AUDIT-2026-11-06.md): alcance, pruebas, límites y prioridades. La revisión detectó dos defectos reproducibles: renovación de sesión frente a cierre en otra pestaña y conservación de archivos antiguos dentro del directorio publicado. Ambos están corregidos en el fuente; requieren publicar el frontend actualizado. Ver [mejoras preparadas y tres propuestas de diseño](docs/MEJORAS.md). La auditoría original se conserva como registro de lo observado.
 
-Prioridad: publicar las correcciones, elegir el rediseño, mejorar recuperación/restauración y automatizar pruebas/publicación. Después, proponer ajustes de recurrentes por voz con revisión. Las cuentas individuales para consultar una deuda y las finanzas personales quedan para una etapa posterior.
+Prioridad: publicar el diseño B en verde con las correcciones, mejorar recuperación/restauración y automatizar pruebas/publicación. Después, proponer ajustes de recurrentes por voz con revisión. Las cuentas individuales para consultar una deuda y las finanzas personales quedan para una etapa posterior.
