@@ -1,60 +1,64 @@
 # Control de tarjetas
 
-Control de tarjetas de crédito con más de una persona. Aplicación en español para consultar un mes de pago y ver cuánto corresponde a cada persona, con desglose por tarjeta y concepto.
+Aplicación en español para elegir un mes y ver cuánto corresponde pagar a cada persona, con desglose por tarjeta y compra. Incluye compras normales, MSI y recurrentes. Los totales son cargos previstos; no acreditan transferencias ni abonos de personas.
 
-## Funciones
+## Qué funciona
 
-- Compras, MSI y recurrentes con primer mes de pago explícito.
-- Importes variables por mes; omitir e incluir un cargo sin alterar otros meses.
-- Finalizar y reactivar recurrentes conservando el historial.
-- Papelera recuperable de compras, con confirmación.
-- Resumen por persona y tarjeta en imagen PNG, con subtotales y detalle. Desde el detalle elegir «Resumen para compartir», después Descargar imagen o Compartir. La imagen incluye solo la selección actual, no los datos de otras personas.
-- Acceso privado y sincronización con Supabase. Los cargos previstos no acreditan pagos recibidos.
+- Resumen mensual, detalle por persona/tarjeta y ajuste de centavos en la última cuota MSI.
+- Ajustar el importe de un cargo solo en un mes, marcar «No aplica este mes» y restaurarlo.
+- Finalizar/reactivar recurrentes y eliminar/restaurar compras mediante papelera.
+- Agregar, editar y archivar personas y tarjetas conservando el historial.
+- Marcar una tarjeta pagada al banco o pendiente, de forma independiente por mes.
+- Resumen en imagen PNG para descargar o compartir desde el dispositivo.
+- Acceso privado y sincronización con Supabase.
+- Acceso rápido desde iPhone con `?nuevo=1`: abre Nueva compra después de iniciar sesión; no guarda automáticamente.
+
+## Conexión con Muse / Polilla y WhatsApp
+
+**La aplicación puede conectarse con Muse, mediante Polilla.** El propietario confirmó que las consultas y el registro de una compra, tras su revisión, funcionan desde WhatsApp a través de Polilla. No es un bot de WhatsApp alojado en este repositorio: el canal de voz/mensajería y la interpretación los aporta Muse.
+
+Hay dos conectores independientes:
+
+| Conector | Permite | No permite |
+| --- | --- | --- |
+| Tarjetas Reader | Consultar personas, tarjetas, compras, cuotas y resumen por mes/persona/tarjeta | Modificar compras o pagos |
+| Tarjetas Propuestas | Preparar compras normales o MSI y consultar su estado | Confirmarlas, cambiar recurrentes o registrar pagos al banco |
+
+El propietario revisa y confirma las propuestas en la página. Cada intención conserva un identificador para que repetir una petición no duplique la compra. Las propuestas vencen a los diez minutos. Los accesos de Polilla no caducan automáticamente y se pueden revocar desde **Accesos de Polilla**; sus tokens se muestran solo al generarlos.
+
+Guía de conexión y ejemplos: [Muse / Polilla](docs/MUSE.md). Contratos técnicos: [lectura](docs/READER.md), [propuestas](docs/PROPOSALS.md), [accesos](docs/CONNECTIONS.md).
 
 ## Ejecutar y publicar
 
-Requiere Node.js moderno. `npm run dev` abre la vista local en http://127.0.0.1:4173. Los datos privados de `data/base.json` no se incluyen en Git; se mantienen en la computadora del propietario. Una instalación nueva debe configurar sus propios datos y su propio proyecto Supabase.
+Requiere Node.js moderno (Netlify está configurado con Node 22). `npm run dev` abre la vista local en `http://127.0.0.1:4173`. `npm test` ejecuta los tests disponibles en el checkout. En una copia pública se usan datos ficticios; algunas regresiones privadas permanecen solo en la computadora del propietario.
 
-`npm test` ejecuta las pruebas publicables con datos ficticios. Las pruebas locales sobre el archivo privado no se suben a GitHub.
+`npm run build` genera `dist`. Netlify publica esa carpeta, según `netlify.toml`; también puede cargarse el ZIP de publicación preparado localmente. Los datos se consultan con la sesión autenticada. `app/config.js` contiene únicamente configuración publicable; las claves administrativas pertenecen al servidor.
 
-`npm run build` genera `dist`. Netlify publica únicamente esa carpeta, como indica `netlify.toml`. Las compras se obtienen desde la cuenta autenticada, no desde los archivos públicos. La configuración publicable está en `app/config.js`; nunca usar claves administrativas en el navegador.
+La copia pública no incluye Excel, compras privadas, tokens ni respaldos. La vista local del propietario usa `data/base.json`, excluido de Git. Una instalación nueva necesita configurar su propio proyecto y su propia primera importación.
 
 ## Supabase
 
-Para una instalación nueva ejecutar `supabase/001_setup.sql` y después `002_month_adjustments.sql` y `003_purchase_controls.sql`. Para una cuenta existente ejecutar solo las migraciones que falten. No se necesita volver a importar las compras.
+Para una instalación nueva, aplicar las migraciones en orden:
 
-Las tablas tienen políticas por propietario. Las escrituras usan funciones autenticadas; los ajustes no alteran el registro original. La exportación de respaldo y los archivos de Excel permanecen fuera del repositorio.
+1. `001_setup.sql`: cuenta y compras.
+2. `002_month_adjustments.sql`: ajustes por mes.
+3. `003_purchase_controls.sql`: recurrentes y papelera.
+4. `004_bank_payments.sql`: estado pagado/pendiente por tarjeta y mes.
+5. `005_entities.sql`: personas y tarjetas.
+6. `006_reader.sql`: API de lectura para asistentes.
+7. `007_proposals.sql`: propuestas con confirmación del propietario.
+8. `008_connections.sql`: accesos revocables sin caducidad automática.
 
-## Periodos
+En una cuenta existente aplicar solo lo que falte. No reimportar ni sustituir compras para actualizar funciones. Desplegar también las funciones `reader` y `proposals` siguiendo sus guías; el build de Netlify no las despliega. Las tablas financieras tienen políticas por propietario; las tablas internas de conectores/propuestas no conceden acceso directo al navegador.
 
-El selector indica el mes del pago previsto. Una fecha aproximada de corte o el día habitual en que se realiza un pago no asigna automáticamente una compra a otro mes. Las nuevas compras requieren elegir su primer mes de pago. Omitir un MSI no mueve la cuota ni modifica los contadores originales.
+## Cómo interpretar un mes
 
-## Pendientes
+El selector corresponde al mes del pago previsto. El corte aproximado o pagar entre dos meses no mueve automáticamente una compra a otro periodo. Las compras nuevas requieren primer mes de pago explícito. Omitir una mensualidad MSI no la reprograma ni modifica el avance original.
 
-Configurar el Atajo del iPhone, recuperación de contraseña y una cola de cambios sin conexión.
+Marcar «Pagada al banco» conserva los cargos en el desglose y no inventa importe ni fecha de transferencia. Eliminar una compra la excluye de todos los meses hasta restaurarla; finalizar un recurrente conserva los meses anteriores.
 
-## Acceso desde Atajos del iPhone
+## Auditoría y siguientes mejoras
 
-Añadir `?nuevo=1` a la URL publicada abre Nueva compra tras iniciar sesión. En Atajos, crear una acción URL con ese enlace y Abrir URL. El primer mes sugerido usa el mes actual en México; se puede cambiar antes de guardar. El enlace nunca guarda por sí solo ni contiene contraseñas. Si la sesión expiró pide acceso y después continúa al formulario.
+[Auditoría del 6 de noviembre de 2026](docs/AUDIT-2026-11-06.md): alcance, pruebas, límites y prioridades. La revisión detectó dos defectos reproducibles pendientes: renovación de sesión frente a cierre en otra pestaña y conservación de archivos antiguos dentro del directorio publicado. No se modificó la lógica ni la base de producción en esa auditoría.
 
-Las compras originales con un mes de pago confirmado se incluyen solo ese mes aunque el plan original excluya otras compras normales sin periodo confirmado. No se modifican sus contadores originales.
-
-## Marcar una tarjeta pagada al banco
-
-En cada tarjeta del mes seleccionado, pulsar «Marcar pagada al banco» y confirmar. «Dejar pendiente» revierte ese estado solo para esa tarjeta y ese mes. Se guarda en la cuenta después de una respuesta exitosa; no registra importe o fecha de transferencia, ni abonos de personas, ni cambia cuotas. Los cargos permanecen en el desglose.
-
-Ejecutar `supabase/004_bank_payments.sql` en la cuenta existente y actualizar Netlify. El archivo exportado local `Habilitar pagos de tarjetas.sql` contiene la misma migración.
-
-## Personas y tarjetas
-
-Los botones visibles Personas · agregar y editar y Tarjetas y pagos al banco abren la administración de la cuenta. Agregar y Editar permiten cambiar nombres y alias; archivar impide nuevas compras sin borrar el historial. Restaurar se hace desmarcando Archivar. Los estados bancarios se confirman por tarjeta y mes. No se lleva un registro de abonos de personas.
-
-Ejecutar `supabase/005_entities.sql` después de las migraciones anteriores. El archivo local Habilitar personas y tarjetas.sql reúne las capacidades bancarias y de administración para esta entrega. El servidor conserva identificadores, valida propietario y revisión para evitar reemplazar una edición de otro dispositivo, y bloquea nuevas compras sobre personas o tarjetas archivadas.
-
-## Propuestas de Polilla
-
-La integración puede preparar compras normales y MSI con permisos específicos, sin aprobarlas. El propietario revisa y decide desde Propuestas de Polilla en la página. Cada propuesta tiene hash, versión, intención idempotente y vigencia de diez minutos. Ver `docs/PROPOSALS.md` y `supabase/007_proposals.sql`. Los permisos del lector existente no cambian; el conector de propuestas usa otra credencial.
-
-## Accesos de Polilla
-
-La sección **Accesos de Polilla** permite generar y revocar los accesos de lectura o propuestas desde la cuenta autenticada. Los nuevos tokens no caducan automáticamente. Las propuestas siguen requiriendo confirmación y vencen a los diez minutos. Instalar `supabase/008_connections.sql` después de las migraciones anteriores. Guía: [docs/CONNECTIONS.md](docs/CONNECTIONS.md).
+Prioridad: corregir esos defectos, mejorar recuperación/restauración y automatizar pruebas/publicación. Después, proponer ajustes de recurrentes por voz con revisión. Las cuentas individuales para consultar una deuda y las finanzas personales quedan para una etapa posterior.
